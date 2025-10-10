@@ -1,0 +1,131 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { BarChart3, TrendingUp, Calendar, Award } from "lucide-react";
+
+interface AttendanceStatsProps {
+  studentId: string;
+}
+
+const AttendanceStats = ({ studentId }: AttendanceStatsProps) => {
+  const [stats, setStats] = useState({
+    totalRegistered: 0,
+    totalAttended: 0,
+    percentage: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadStats();
+  }, [studentId]);
+
+  const loadStats = async () => {
+    const { data: registrations } = await supabase
+      .from("event_registrations")
+      .select("id, event_id")
+      .eq("student_id", studentId);
+
+    const { data: attendance } = await supabase
+      .from("attendance")
+      .select("id")
+      .eq("student_id", studentId);
+
+    const totalRegistered = registrations?.length || 0;
+    const totalAttended = attendance?.length || 0;
+    const percentage = totalRegistered > 0 ? (totalAttended / totalRegistered) * 100 : 0;
+
+    setStats({
+      totalRegistered,
+      totalAttended,
+      percentage: Math.round(percentage),
+    });
+    setLoading(false);
+  };
+
+  if (loading) {
+    return <div>Loading statistics...</div>;
+  }
+
+  return (
+    <div className="grid gap-6 md:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-primary" />
+            Overall Attendance
+          </CardTitle>
+          <CardDescription>Your attendance percentage across all events</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-4xl font-bold text-primary">{stats.percentage}%</div>
+          <Progress value={stats.percentage} className="h-3" />
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>{stats.totalAttended} attended</span>
+            <span>{stats.totalRegistered} registered</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-primary" />
+            Event Statistics
+          </CardTitle>
+          <CardDescription>Your event participation breakdown</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Registered Events</p>
+              <p className="text-3xl font-bold">{stats.totalRegistered}</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Events Attended</p>
+              <p className="text-3xl font-bold text-green-600">{stats.totalAttended}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-2">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Award className="h-5 w-5 text-primary" />
+            Attendance Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {stats.percentage >= 75 ? (
+            <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+              <TrendingUp className="h-8 w-8 text-green-600" />
+              <div>
+                <p className="font-semibold text-green-700 dark:text-green-400">Excellent Attendance!</p>
+                <p className="text-sm text-green-600 dark:text-green-500">Keep up the great work!</p>
+              </div>
+            </div>
+          ) : stats.percentage >= 50 ? (
+            <div className="flex items-center gap-3 p-4 bg-yellow-50 dark:bg-yellow-950 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <BarChart3 className="h-8 w-8 text-yellow-600" />
+              <div>
+                <p className="font-semibold text-yellow-700 dark:text-yellow-400">Good Progress</p>
+                <p className="text-sm text-yellow-600 dark:text-yellow-500">Try to attend more events to improve!</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950 rounded-lg border border-red-200 dark:border-red-800">
+              <Calendar className="h-8 w-8 text-red-600" />
+              <div>
+                <p className="font-semibold text-red-700 dark:text-red-400">Needs Improvement</p>
+                <p className="text-sm text-red-600 dark:text-red-500">Attend more events to boost your attendance!</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default AttendanceStats;

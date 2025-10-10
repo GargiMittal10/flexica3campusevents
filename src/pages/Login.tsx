@@ -27,12 +27,24 @@ const Login = () => {
 
       if (error) throw error;
 
+      // Get user profile to determine role
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+
       toast({
         title: "Success!",
         description: "Logged in successfully"
       });
 
-      navigate("/");
+      // Redirect based on role
+      if (profile?.role === "faculty") {
+        navigate("/faculty-dashboard");
+      } else {
+        navigate("/student-dashboard");
+      }
     } catch (error: any) {
       toast({
         title: "Error",

@@ -63,10 +63,15 @@ const Signup = () => {
 
       toast({
         title: "Success!",
-        description: "Account created successfully. You can now log in."
+        description: "Account created successfully"
       });
       
-      navigate("/login");
+      // Redirect based on role
+      if (formData.role === "faculty") {
+        navigate("/faculty-dashboard");
+      } else {
+        navigate("/student-dashboard");
+      }
     } catch (error: any) {
       toast({
         title: "Error",
