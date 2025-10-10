@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { GraduationCap, Mail, Lock, User, Hash } from "lucide-react";
+import { GraduationCap, Mail, Lock, User, Hash, ArrowLeft } from "lucide-react";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -26,6 +26,13 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
+      <Link to="/" className="fixed top-4 left-4 z-10">
+        <Button variant="ghost" className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Home
+        </Button>
+      </Link>
+      
       <Card className="w-full max-w-md shadow-lg border-border/50">
         <CardHeader className="space-y-4 text-center">
           <div className="mx-auto p-3 rounded-2xl bg-gradient-to-br from-primary to-accent w-fit">
