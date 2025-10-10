@@ -65,6 +65,29 @@ const Login = () => {
     setResetLoading(true);
 
     try {
+      // First, check if the email exists in the database
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("email", resetEmail)
+        .maybeSingle();
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      // If email doesn't exist, show error
+      if (!profile) {
+        toast({
+          title: "Email Not Found",
+          description: "This email is not registered in our system. Please check and try again.",
+          variant: "destructive",
+        });
+        setResetLoading(false);
+        return;
+      }
+
+      // Email exists, proceed with password reset
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
