@@ -26,23 +26,38 @@ const Footer = () => {
             <h3 className="font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/#features" className="text-muted-foreground hover:text-primary transition-colors story-link">
+                <button 
+                  onClick={() => {
+                    window.location.href = "/#features";
+                  }}
+                  className="text-muted-foreground hover:text-primary transition-colors story-link"
+                >
                   Features
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/#about" className="text-muted-foreground hover:text-primary transition-colors story-link">
+                <button 
+                  onClick={() => {
+                    window.location.href = "/#about";
+                  }}
+                  className="text-muted-foreground hover:text-primary transition-colors story-link"
+                >
                   About
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/#contact" className="text-muted-foreground hover:text-primary transition-colors story-link">
+                <button 
+                  onClick={() => {
+                    window.location.href = "/#contact";
+                  }}
+                  className="text-muted-foreground hover:text-primary transition-colors story-link"
+                >
                   Contact
-                </Link>
+                </button>
               </li>
               <li>
                 <a 
-                  href="/CA3-Flexi-Report.pdf" 
+                  href="https://drive.google.com/file/d/1StHYKW51qEOb-ROTiPaw9_bDIk0DEdXU/view?usp=sharing" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-muted-foreground hover:text-primary transition-colors story-link flex items-center gap-1"
@@ -59,7 +74,7 @@ const Footer = () => {
             <ul className="space-y-2 text-sm">
               <li>
                 <a 
-                  href="/CA3-Flexi-Report.pdf" 
+                  href="https://drive.google.com/file/d/1StHYKW51qEOb-ROTiPaw9_bDIk0DEdXU/view?usp=sharing" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-muted-foreground hover:text-primary transition-colors story-link"

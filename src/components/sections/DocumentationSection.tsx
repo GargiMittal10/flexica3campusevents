@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, ExternalLink } from "lucide-react";
+import { FileText, ExternalLink } from "lucide-react";
 
 const DocumentationSection = () => {
   return (
@@ -17,50 +17,27 @@ const DocumentationSection = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-4">
-              <Card className="border-border/50 bg-background hover:shadow-md transition-all hover-scale">
-                <CardContent className="pt-6">
-                  <h3 className="font-semibold mb-2 flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-primary" />
-                    Technical Report
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Comprehensive project report with problem statement, architecture, and implementation details
-                  </p>
-                  <a 
-                    href="/CA3-Flexi-Report.pdf" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                  >
-                    <Button variant="outline" className="w-full">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      View PDF
-                    </Button>
-                  </a>
-                </CardContent>
-              </Card>
-
-              <Card className="border-border/50 bg-background hover:shadow-md transition-all hover-scale">
-                <CardContent className="pt-6">
-                  <h3 className="font-semibold mb-2 flex items-center gap-2">
-                    <Download className="h-4 w-4 text-primary" />
-                    Download Report
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Download the complete project documentation for offline reference
-                  </p>
-                  <a 
-                    href="/CA3-Flexi-Report.pdf" 
-                    download="CA3-Flexi-Report.pdf"
-                  >
-                    <Button className="w-full bg-gradient-to-r from-primary to-accent">
-                      <Download className="h-4 w-4 mr-2" />
-                      Download PDF
-                    </Button>
-                  </a>
-                </CardContent>
-              </Card>
-            </div>
+            <Card className="border-border/50 bg-background hover:shadow-md transition-all hover-scale">
+              <CardContent className="pt-6">
+                <h3 className="font-semibold mb-2 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  Technical Report
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Comprehensive project report with problem statement, architecture, and implementation details
+                </p>
+                <a 
+                  href="https://drive.google.com/file/d/1StHYKW51qEOb-ROTiPaw9_bDIk0DEdXU/view?usp=sharing" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  <Button className="w-full bg-gradient-to-r from-primary to-accent">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    View Report
+                  </Button>
+                </a>
+              </CardContent>
+            </Card>
 
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 space-y-3">
               <h4 className="font-semibold text-lg">What's Included:</h4>
