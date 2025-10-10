@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { GraduationCap, Mail, Lock, User, Hash, ArrowLeft } from "lucide-react";
+import { GraduationCap, Mail, Lock, User, Hash, ArrowLeft, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Signup = () => {
   const { toast } = useToast();
@@ -20,6 +21,7 @@ const Signup = () => {
     password: "",
     confirmPassword: ""
   });
+  const [idCard, setIdCard] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,33 +45,70 @@ const Signup = () => {
       return;
     }
 
+    if (formData.role === "faculty" && !idCard) {
+      toast({
+        title: "Error",
+        description: "Please upload your faculty ID card",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
     
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: formData.name,
-            student_id: formData.studentId,
-            role: formData.role
-          },
-          emailRedirectTo: `${window.location.origin}/`
-        }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success!",
-        description: "Account created successfully"
-      });
-      
-      // Redirect based on role
+      // Faculty signup - requires approval
       if (formData.role === "faculty") {
-        navigate("/faculty-dashboard");
+        // Upload ID card
+        const fileExt = idCard!.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from("faculty-id-cards")
+          .upload(fileName, idCard!);
+
+        if (uploadError) throw uploadError;
+
+        // Create pending approval request
+        const { error: approvalError } = await supabase
+          .from("pending_faculty_approvals")
+          .insert({
+            full_name: formData.name,
+            email: formData.email,
+            student_id: formData.studentId,
+            id_card_url: fileName,
+          });
+
+        if (approvalError) throw approvalError;
+
+        toast({
+          title: "Application Submitted",
+          description: "Your faculty application has been submitted for admin approval. You'll receive an email once approved.",
+        });
+        
+        navigate("/login");
       } else {
+        // Student signup - direct registration
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              full_name: formData.name,
+              student_id: formData.studentId,
+              role: formData.role
+            },
+            emailRedirectTo: `${window.location.origin}/`
+          }
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Success!",
+          description: "Account created successfully"
+        });
+        
         navigate("/student-dashboard");
       }
     } catch (error: any) {
@@ -166,6 +205,33 @@ const Signup = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            {formData.role === "faculty" && (
+              <div className="space-y-2">
+                <Label htmlFor="idCard">Faculty ID Card *</Label>
+                <Alert>
+                  <AlertDescription>
+                    Your application will be reviewed by an administrator before you can login
+                  </AlertDescription>
+                </Alert>
+                <div className="relative">
+                  <Input
+                    id="idCard"
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => setIdCard(e.target.files?.[0] || null)}
+                    className="cursor-pointer"
+                    required
+                  />
+                  <Upload className="absolute right-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
+                </div>
+                {idCard && (
+                  <p className="text-sm text-muted-foreground">
+                    Selected: {idCard.name}
+                  </p>
+                )}
+              </div>
+            )}
             
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
