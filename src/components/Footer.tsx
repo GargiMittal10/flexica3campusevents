@@ -125,7 +125,7 @@ const Footer = () => {
         <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
           <p>© {currentYear} CampusEvents - Symbiosis Institute of Technology, Pune. All rights reserved.</p>
           <p className="mt-2 text-xs">
-            Developed by: Gargi Mittal, Meet Golani, Aryan Malkani, Yogita Beniwal
+            Developed by: Aryan Malkani, Gargi Mittal, Meet Golani, Yogita Beniwal
           </p>
         </div>
       </div>

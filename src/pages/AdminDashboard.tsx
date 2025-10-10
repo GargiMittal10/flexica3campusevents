@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, LogOut, CheckCircle, XCircle, Clock, FileText } from "lucide-react";
+import { ShieldCheck, LogOut, CheckCircle, XCircle, Clock, FileText, BarChart3, Calendar, History } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EventAnalytics } from "@/components/admin/EventAnalytics";
+import { EventManagementTable } from "@/components/admin/EventManagementTable";
+import { EventHistory } from "@/components/admin/EventHistory";
 
 interface PendingApproval {
   id: string;
@@ -28,13 +32,18 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [attendance, setAttendance] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApproval, setSelectedApproval] = useState<PendingApproval | null>(null);
   const [idCardUrl, setIdCardUrl] = useState<string>("");
+  const [activeTab, setActiveTab] = useState("approvals");
 
   useEffect(() => {
     checkAdminAccess();
     fetchPendingApprovals();
+    fetchEvents();
+    fetchAttendance();
   }, []);
 
   const checkAdminAccess = async () => {
@@ -79,6 +88,33 @@ const AdminDashboard = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchEvents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .order("event_date", { ascending: false });
+
+      if (error) throw error;
+      setEvents(data || []);
+    } catch (error: any) {
+      console.error("Error fetching events:", error);
+    }
+  };
+
+  const fetchAttendance = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("attendance")
+        .select("*");
+
+      if (error) throw error;
+      setAttendance(data || []);
+    } catch (error: any) {
+      console.error("Error fetching attendance:", error);
     }
   };
 
@@ -175,7 +211,7 @@ const AdminDashboard = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-              <p className="text-muted-foreground">Faculty Approval Management</p>
+              <p className="text-muted-foreground">System Management & Analytics</p>
             </div>
           </div>
           <Button variant="outline" onClick={handleLogout} className="gap-2">
@@ -184,15 +220,35 @@ const AdminDashboard = () => {
           </Button>
         </div>
 
-        <div className="grid gap-4">
-          {pendingApprovals.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6 text-center text-muted-foreground">
-                No pending faculty approvals
-              </CardContent>
-            </Card>
-          ) : (
-            pendingApprovals.map((approval) => (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="approvals" className="gap-2">
+              <FileText className="h-4 w-4" />
+              Approvals
+            </TabsTrigger>
+            <TabsTrigger value="events" className="gap-2">
+              <Calendar className="h-4 w-4" />
+              Events
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="history" className="gap-2">
+              <History className="h-4 w-4" />
+              History
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="approvals" className="space-y-4">
+            {pendingApprovals.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center text-muted-foreground">
+                  No pending faculty approvals
+                </CardContent>
+              </Card>
+            ) : (
+              pendingApprovals.map((approval) => (
               <Card key={approval.id}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -235,10 +291,23 @@ const AdminDashboard = () => {
                     </Button>
                   </CardContent>
                 )}
-              </Card>
-            ))
-          )}
-        </div>
+                </Card>
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="events">
+            <EventManagementTable events={events} onRefresh={fetchEvents} />
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <EventAnalytics events={events} attendance={attendance} />
+          </TabsContent>
+
+          <TabsContent value="history">
+            <EventHistory events={events} />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <Dialog open={!!selectedApproval} onOpenChange={() => setSelectedApproval(null)}>
