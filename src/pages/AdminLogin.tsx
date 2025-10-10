@@ -19,9 +19,18 @@ const AdminLogin = () => {
   useEffect(() => {
     const createAdmin = async () => {
       try {
-        await supabase.functions.invoke('create-admin');
+        const { data, error } = await supabase.functions.invoke('create-admin');
+        
+        if (error) {
+          console.error('Error creating admin:', error);
+          return;
+        }
+
+        if (data?.success) {
+          console.log('Admin setup:', data.message);
+        }
       } catch (error) {
-        // Silently fail if admin already exists
+        console.error('Failed to create admin:', error);
       }
     };
     createAdmin();

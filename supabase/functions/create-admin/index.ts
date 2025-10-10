@@ -17,6 +17,25 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Check if admin already exists
+    const { data: existingProfile } = await supabaseClient
+      .from('profiles')
+      .select('id')
+      .eq('email', 'admin@test.com')
+      .maybeSingle();
+
+    if (existingProfile) {
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Admin user already exists',
+          email: 'admin@test.com',
+          password: 'Admin123!'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Create admin user (use 'faculty' for profile role, admin role goes in user_roles table)
     const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
       email: 'admin@test.com',
@@ -51,6 +70,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
+    console.error('Error creating admin:', error);
     const message = error instanceof Error ? error.message : 'An error occurred';
     return new Response(
       JSON.stringify({ error: message }),
