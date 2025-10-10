@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-image.jpg";
 import AboutSection from "@/components/sections/AboutSection";
 import ContactSection from "@/components/sections/ContactSection";
+import DocumentationSection from "@/components/sections/DocumentationSection";
 import { useEffect } from "react";
 
 const Index = () => {
@@ -152,6 +153,7 @@ const Index = () => {
       </section>
 
       <AboutSection />
+      <DocumentationSection />
       <ContactSection />
 
       {/* CTA Section */}
