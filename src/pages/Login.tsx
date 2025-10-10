@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { GraduationCap, Mail, Lock, ArrowLeft } from "lucide-react";
+import { GraduationCap, Mail, Lock, ArrowLeft, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -211,6 +211,13 @@ const Login = () => {
               Don't have an account?{" "}
               <Link to="/signup" className="text-primary font-medium hover:underline">
                 Sign up
+              </Link>
+            </div>
+
+            <div className="text-center pt-4 border-t border-border/50">
+              <Link to="/admin-login" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" />
+                Admin Login
               </Link>
             </div>
           </form>
