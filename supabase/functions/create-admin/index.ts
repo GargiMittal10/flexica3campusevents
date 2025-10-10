@@ -17,7 +17,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Create admin user
+    // Create admin user (use 'faculty' for profile role, admin role goes in user_roles table)
     const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
       email: 'admin@test.com',
       password: 'Admin123!',
@@ -25,7 +25,7 @@ serve(async (req) => {
       user_metadata: {
         full_name: 'Admin User',
         student_id: 'ADMIN001',
-        role: 'admin'
+        role: 'faculty'
       }
     });
 
