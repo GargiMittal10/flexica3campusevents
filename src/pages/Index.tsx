@@ -5,19 +5,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Calendar, QrCode, BarChart3, MessageSquare, Shield, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-image.jpg";
+import AboutSection from "@/components/sections/AboutSection";
+import ContactSection from "@/components/sections/ContactSection";
+import { useEffect } from "react";
 
 const Index = () => {
+  useEffect(() => {
+    // Smooth scroll behavior
+    document.documentElement.style.scrollBehavior = "smooth";
+    return () => {
+      document.documentElement.style.scrollBehavior = "auto";
+    };
+  }, []);
+
   return (
     <div className="min-h-screen">
       <Navbar />
       
       {/* Hero Section */}
       <section className="pt-24 pb-16 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 -z-10" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 -z-10 animate-fade-in" />
         <div className="container mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <div className="inline-block px-4 py-2 bg-primary/10 rounded-full text-sm font-medium text-primary border border-primary/20">
+            <div className="space-y-8 animate-fade-in">
+              <div className="inline-block px-4 py-2 bg-primary/10 rounded-full text-sm font-medium text-primary border border-primary/20 hover-scale">
                 ✨ Modern Event Management Platform
               </div>
               <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
@@ -31,23 +42,23 @@ const Index = () => {
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link to="/signup">
-                  <Button size="lg" className="bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-lg">
+                  <Button size="lg" className="bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all shadow-lg hover-scale">
                     Get Started Free
                   </Button>
                 </Link>
                 <Link to="/login">
-                  <Button size="lg" variant="outline">
+                  <Button size="lg" variant="outline" className="hover-scale">
                     Sign In
                   </Button>
                 </Link>
               </div>
             </div>
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-3xl" />
+            <div className="relative animate-fade-in" style={{ animationDelay: "200ms" }}>
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-3xl animate-pulse" />
               <img 
                 src={heroImage} 
                 alt="Students engaging with campus events" 
-                className="relative rounded-2xl shadow-2xl border border-border/50"
+                className="relative rounded-2xl shadow-2xl border border-border/50 hover-scale transition-transform duration-500"
               />
             </div>
           </div>
@@ -55,9 +66,9 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-4 bg-muted/30">
+      <section id="features" className="py-20 px-4 bg-muted/30 scroll-mt-20">
         <div className="container mx-auto">
-          <div className="text-center mb-16 space-y-4">
+          <div className="text-center mb-16 space-y-4 animate-fade-in">
             <h2 className="text-4xl font-bold">Everything You Need</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Comprehensive tools designed to simplify event management and enhance student engagement
@@ -65,9 +76,9 @@ const Index = () => {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="border-border/50 hover:shadow-lg transition-shadow">
+            <Card className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-2 animate-fade-in group">
               <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-4">
+                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Calendar className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <CardTitle>Event Management</CardTitle>
@@ -77,9 +88,9 @@ const Index = () => {
               </CardHeader>
             </Card>
 
-            <Card className="border-border/50 hover:shadow-lg transition-shadow">
+            <Card className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-2 animate-fade-in group" style={{ animationDelay: "100ms" }}>
               <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-accent to-primary flex items-center justify-center mb-4">
+                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-accent to-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <QrCode className="h-6 w-6 text-accent-foreground" />
                 </div>
                 <CardTitle>QR Code Attendance</CardTitle>
@@ -89,9 +100,9 @@ const Index = () => {
               </CardHeader>
             </Card>
 
-            <Card className="border-border/50 hover:shadow-lg transition-shadow">
+            <Card className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-2 animate-fade-in group" style={{ animationDelay: "200ms" }}>
               <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-4">
+                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <BarChart3 className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <CardTitle>Analytics Dashboard</CardTitle>
@@ -101,9 +112,9 @@ const Index = () => {
               </CardHeader>
             </Card>
 
-            <Card className="border-border/50 hover:shadow-lg transition-shadow">
+            <Card className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-2 animate-fade-in group" style={{ animationDelay: "300ms" }}>
               <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-accent to-primary flex items-center justify-center mb-4">
+                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-accent to-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <MessageSquare className="h-6 w-6 text-accent-foreground" />
                 </div>
                 <CardTitle>Feedback & Surveys</CardTitle>
@@ -113,9 +124,9 @@ const Index = () => {
               </CardHeader>
             </Card>
 
-            <Card className="border-border/50 hover:shadow-lg transition-shadow">
+            <Card className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-2 animate-fade-in group" style={{ animationDelay: "400ms" }}>
               <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-4">
+                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Shield className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <CardTitle>Secure & Reliable</CardTitle>
@@ -125,9 +136,9 @@ const Index = () => {
               </CardHeader>
             </Card>
 
-            <Card className="border-border/50 hover:shadow-lg transition-shadow">
+            <Card className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-2 animate-fade-in group" style={{ animationDelay: "500ms" }}>
               <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-accent to-primary flex items-center justify-center mb-4">
+                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-accent to-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Zap className="h-6 w-6 text-accent-foreground" />
                 </div>
                 <CardTitle>Lightning Fast</CardTitle>
@@ -140,10 +151,13 @@ const Index = () => {
         </div>
       </section>
 
+      <AboutSection />
+      <ContactSection />
+
       {/* CTA Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto">
-          <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground border-0 shadow-2xl">
+          <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground border-0 shadow-2xl hover-scale transition-all duration-500 animate-fade-in">
             <CardContent className="p-12 text-center space-y-6">
               <h2 className="text-4xl font-bold">Ready to Transform Your Campus Events?</h2>
               <p className="text-xl opacity-90 max-w-2xl mx-auto">
@@ -151,12 +165,12 @@ const Index = () => {
               </p>
               <div className="flex flex-wrap gap-4 justify-center pt-4">
                 <Link to="/signup">
-                  <Button size="lg" variant="secondary" className="shadow-lg">
+                  <Button size="lg" variant="secondary" className="shadow-lg hover-scale">
                     Start Free Trial
                   </Button>
                 </Link>
                 <Link to="/#contact">
-                  <Button size="lg" variant="outline" className="bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10">
+                  <Button size="lg" variant="outline" className="bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10 hover-scale">
                     Contact Sales
                   </Button>
                 </Link>
