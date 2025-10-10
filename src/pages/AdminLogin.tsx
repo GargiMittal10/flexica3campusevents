@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,23 +15,17 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const createAdminAccount = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('create-admin');
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Admin account created!",
-        description: "Email: admin@test.com, Password: Admin123!",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Info",
-        description: error.message || "Admin account may already exist",
-      });
-    }
-  };
+  // Auto-create admin account on mount
+  useEffect(() => {
+    const createAdmin = async () => {
+      try {
+        await supabase.functions.invoke('create-admin');
+      } catch (error) {
+        // Silently fail if admin already exists
+      }
+    };
+    createAdmin();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,19 +93,9 @@ const AdminLogin = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
-            <Button 
-              type="button"
-              variant="outline" 
-              className="w-full mb-4"
-              onClick={createAdminAccount}
-            >
-              Create Test Admin Account
-            </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              Click above to create: admin@test.com / Admin123!
-            </p>
-          </div>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Test admin: admin@test.com / Admin123!
+          </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
