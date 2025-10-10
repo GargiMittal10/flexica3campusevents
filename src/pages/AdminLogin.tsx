@@ -15,6 +15,24 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const createAdminAccount = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-admin');
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Admin account created!",
+        description: "Email: admin@test.com, Password: Admin123!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Info",
+        description: error.message || "Admin account may already exist",
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -81,6 +99,19 @@ const AdminLogin = () => {
           </div>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <Button 
+              type="button"
+              variant="outline" 
+              className="w-full mb-4"
+              onClick={createAdminAccount}
+            >
+              Create Test Admin Account
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              Click above to create: admin@test.com / Admin123!
+            </p>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
