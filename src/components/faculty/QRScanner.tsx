@@ -12,6 +12,7 @@ const QRScanner = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [selectedEvent, setSelectedEvent] = useState("");
   const [scanner, setScanner] = useState<Html5Qrcode | null>(null);
+  const [activeSession, setActiveSession] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -23,6 +24,23 @@ const QRScanner = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (selectedEvent) {
+      checkActiveSession();
+    }
+  }, [selectedEvent]);
+
+  const checkActiveSession = async () => {
+    const { data } = await supabase
+      .from("attendance_sessions")
+      .select("*")
+      .eq("event_id", selectedEvent)
+      .eq("is_active", true)
+      .single();
+
+    setActiveSession(data);
+  };
+
   const loadEvents = async () => {
     const { data } = await supabase
       .from("events")
@@ -33,11 +51,77 @@ const QRScanner = () => {
     setEvents(data || []);
   };
 
-  const startScanning = async () => {
+  const startAttendanceSession = async () => {
     if (!selectedEvent) {
       toast({
         title: "Error",
         description: "Please select an event first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    const { data, error } = await supabase
+      .from("attendance_sessions")
+      .insert({
+        event_id: selectedEvent,
+        created_by: user?.id || "",
+        is_active: true,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to start attendance session",
+        variant: "destructive",
+      });
+    } else {
+      setActiveSession(data);
+      toast({
+        title: "Success",
+        description: "Attendance session started. Students can now show their QR codes.",
+      });
+    }
+  };
+
+  const endAttendanceSession = async () => {
+    if (!activeSession) return;
+
+    const { error } = await supabase
+      .from("attendance_sessions")
+      .update({
+        is_active: false,
+        ended_at: new Date().toISOString(),
+      })
+      .eq("id", activeSession.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to end attendance session",
+        variant: "destructive",
+      });
+    } else {
+      setActiveSession(null);
+      if (scanning) {
+        await stopScanning();
+      }
+      toast({
+        title: "Success",
+        description: "Attendance session ended",
+      });
+    }
+  };
+
+  const startScanning = async () => {
+    if (!activeSession) {
+      toast({
+        title: "Error",
+        description: "Please start an attendance session first",
         variant: "destructive",
       });
       return;
@@ -157,11 +241,36 @@ const QRScanner = () => {
           </Select>
         </div>
 
+        {selectedEvent && (
+          <div className="space-y-2">
+            {!activeSession ? (
+              <Button onClick={startAttendanceSession} className="w-full" variant="default">
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Start Attendance Session
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <div className="p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+                  <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                    Attendance session is active
+                  </p>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                    Students can now show their QR codes
+                  </p>
+                </div>
+                <Button onClick={endAttendanceSession} variant="outline" className="w-full">
+                  End Attendance Session
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="space-y-4">
           <div id="qr-reader" className="w-full rounded-lg overflow-hidden" />
 
           {!scanning ? (
-            <Button onClick={startScanning} className="w-full" disabled={!selectedEvent}>
+            <Button onClick={startScanning} className="w-full" disabled={!activeSession}>
               <Camera className="h-4 w-4 mr-2" />
               Start Scanning
             </Button>
