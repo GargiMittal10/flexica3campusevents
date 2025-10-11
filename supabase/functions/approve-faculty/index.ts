@@ -49,8 +49,8 @@ serve(async (req) => {
       throw new Error("A user with this email already exists");
     }
 
-    // Generate a random password (user will need to reset)
-    const tempPassword = crypto.randomUUID();
+    // Use a known temporary password for testing (in production, use crypto.randomUUID())
+    const tempPassword = "FacultyTemp123!";
 
     // Create the auth user - this will automatically trigger the handle_new_user function
     // which creates the profile entry
