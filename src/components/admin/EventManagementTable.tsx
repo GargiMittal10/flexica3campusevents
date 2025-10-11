@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Plus, Users } from "lucide-react";
+import { Pencil, Trash2, Plus, Users, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -32,6 +32,8 @@ interface Event {
   event_date: string;
   location: string;
   created_at: string;
+  status?: string;
+  ended_at?: string;
 }
 
 interface EventManagementTableProps {
@@ -86,6 +88,35 @@ export const EventManagementTable = ({ events, onRefresh }: EventManagementTable
       toast({
         title: "Success",
         description: "Event deleted successfully",
+      });
+
+      onRefresh();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEndEvent = async (eventId: string) => {
+    if (!confirm("Are you sure you want to end this event?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("events")
+        .update({
+          status: "ended",
+          ended_at: new Date().toISOString(),
+        })
+        .eq("id", eventId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Event marked as ended",
       });
 
       onRefresh();
@@ -243,8 +274,13 @@ export const EventManagementTable = ({ events, onRefresh }: EventManagementTable
                   <TableCell>{new Date(event.event_date).toLocaleString()}</TableCell>
                   <TableCell>{event.location || "N/A"}</TableCell>
                   <TableCell>
-                    {isEventPast(event.event_date) ? (
-                      <Badge variant="secondary">Completed</Badge>
+                    {event.status === "ended" ? (
+                      <Badge variant="secondary" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Ended
+                      </Badge>
+                    ) : isEventPast(event.event_date) ? (
+                      <Badge variant="secondary">Past</Badge>
                     ) : (
                       <Badge>Upcoming</Badge>
                     )}
@@ -260,6 +296,17 @@ export const EventManagementTable = ({ events, onRefresh }: EventManagementTable
                         <Pencil className="h-3 w-3" />
                         Edit
                       </Button>
+                      {event.status !== "ended" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEndEvent(event.id)}
+                          className="gap-1 text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                        >
+                          <CheckCircle className="h-3 w-3" />
+                          End
+                        </Button>
+                      )}
                       <Button
                         variant="destructive"
                         size="sm"

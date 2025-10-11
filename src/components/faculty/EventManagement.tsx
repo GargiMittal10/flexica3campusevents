@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Calendar, MapPin, Users, Edit, Trash2 } from "lucide-react";
+import { Plus, Calendar, MapPin, Users, Edit, Trash2, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import {
   AlertDialog,
@@ -170,6 +170,7 @@ const EventCard = ({ event, onUpdate }: any) => {
   const [attendance, setAttendance] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [endEventOpen, setEndEventOpen] = useState(false);
   const { toast } = useToast();
 
   const [editFormData, setEditFormData] = useState({
@@ -244,12 +245,45 @@ const EventCard = ({ event, onUpdate }: any) => {
     }
   };
 
+  const handleEndEvent = async () => {
+    const { error } = await supabase
+      .from("events")
+      .update({
+        status: "ended",
+        ended_at: new Date().toISOString(),
+      })
+      .eq("id", event.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Event marked as ended",
+      });
+      setEndEventOpen(false);
+      onUpdate();
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between">
-          <div>
-            <CardTitle>{event.title}</CardTitle>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <CardTitle>{event.title}</CardTitle>
+              {event.status === "ended" && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-green-500/10 text-green-600 dark:text-green-400 rounded-full">
+                  <CheckCircle className="h-3 w-3" />
+                  Ended
+                </span>
+              )}
+            </div>
             <CardDescription className="mt-2">{event.description}</CardDescription>
           </div>
           <div className="flex gap-2">
@@ -306,6 +340,33 @@ const EventCard = ({ event, onUpdate }: any) => {
                 </form>
               </DialogContent>
             </Dialog>
+
+            {event.status !== "ended" && (
+              <AlertDialog open={endEventOpen} onOpenChange={setEndEventOpen}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEndEventOpen(true)}
+                  className="text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                </Button>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>End Event</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to mark this event as ended? Students will no longer be able to register or submit attendance for this event.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleEndEvent} className="bg-green-600 hover:bg-green-700">
+                      End Event
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
 
             <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
               <Button

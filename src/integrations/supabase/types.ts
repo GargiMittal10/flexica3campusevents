@@ -142,9 +142,11 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          ended_at: string | null
           event_date: string
           id: string
           location: string | null
+          status: string | null
           title: string
           updated_at: string
         }
@@ -152,9 +154,11 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          ended_at?: string | null
           event_date: string
           id?: string
           location?: string | null
+          status?: string | null
           title: string
           updated_at?: string
         }
@@ -162,9 +166,11 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          ended_at?: string | null
           event_date?: string
           id?: string
           location?: string | null
+          status?: string | null
           title?: string
           updated_at?: string
         }
