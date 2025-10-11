@@ -173,6 +173,26 @@ const Signup = () => {
                 <p className="text-sm text-destructive">{errors.role.message}</p>
               )}
             </div>
+
+            {selectedRole === "FACULTY" && (
+              <div className="space-y-2">
+                <Label htmlFor="idCard">Faculty ID Card *</Label>
+                <p className="text-sm text-muted-foreground">
+                  Faculty applications require verification. Please upload your faculty ID card.
+                </p>
+                <div className="relative">
+                  <Input
+                    id="idCard"
+                    type="file"
+                    accept="image/*,.pdf"
+                    className="cursor-pointer"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Accepted formats: JPG, PNG, PDF (Max 5MB)
+                </p>
+              </div>
+            )}
             
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
