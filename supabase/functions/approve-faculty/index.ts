@@ -41,10 +41,19 @@ serve(async (req) => {
 
     console.log("Found approval for:", approval.email);
 
+    // Check if user already exists
+    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
+    const userExists = existingUser?.users?.some(u => u.email === approval.email);
+
+    if (userExists) {
+      throw new Error("A user with this email already exists");
+    }
+
     // Generate a random password (user will need to reset)
     const tempPassword = crypto.randomUUID();
 
-    // Create the auth user
+    // Create the auth user - this will automatically trigger the handle_new_user function
+    // which creates the profile entry
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: approval.email,
       password: tempPassword,
@@ -63,25 +72,24 @@ serve(async (req) => {
 
     console.log("Created auth user:", authData.user.id);
 
-    // Create profile
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .insert({
-        id: authData.user.id,
-        full_name: approval.full_name,
-        email: approval.email,
-        student_id: approval.student_id,
-        role: "faculty",
-      });
+    // Wait a bit for the trigger to create the profile
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    if (profileError) {
-      console.error("Profile error:", profileError);
-      // Cleanup: delete the auth user if profile creation fails
+    // Verify profile was created by trigger
+    const { data: profile, error: profileCheckError } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .eq("id", authData.user.id)
+      .single();
+
+    if (profileCheckError || !profile) {
+      console.error("Profile not created by trigger:", profileCheckError);
+      // Cleanup: delete the auth user if profile wasn't created
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      throw profileError;
+      throw new Error("Failed to create user profile");
     }
 
-    console.log("Created profile");
+    console.log("Profile created by trigger");
 
     // Assign faculty role
     const { error: roleError } = await supabaseAdmin
