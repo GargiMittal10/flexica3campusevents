@@ -7,8 +7,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Calendar, MapPin, Users } from "lucide-react";
+import { Plus, Calendar, MapPin, Users, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface EventManagementProps {
   facultyId: string;
@@ -158,6 +168,16 @@ const EventManagement = ({ facultyId }: EventManagementProps) => {
 const EventCard = ({ event, onUpdate }: any) => {
   const [registrations, setRegistrations] = useState(0);
   const [attendance, setAttendance] = useState(0);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const { toast } = useToast();
+
+  const [editFormData, setEditFormData] = useState({
+    title: event.title,
+    description: event.description,
+    event_date: new Date(event.event_date).toISOString().slice(0, 16),
+    location: event.location,
+  });
 
   useEffect(() => {
     loadStats();
@@ -178,6 +198,52 @@ const EventCard = ({ event, onUpdate }: any) => {
     setAttendance(attCount || 0);
   };
 
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const { error } = await supabase
+      .from("events")
+      .update(editFormData)
+      .eq("id", event.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Event updated successfully",
+      });
+      setEditOpen(false);
+      onUpdate();
+    }
+  };
+
+  const handleDelete = async () => {
+    const { error } = await supabase
+      .from("events")
+      .delete()
+      .eq("id", event.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Event deleted successfully",
+      });
+      setDeleteOpen(false);
+      onUpdate();
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -185,6 +251,86 @@ const EventCard = ({ event, onUpdate }: any) => {
           <div>
             <CardTitle>{event.title}</CardTitle>
             <CardDescription className="mt-2">{event.description}</CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <Dialog open={editOpen} onOpenChange={setEditOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Event</DialogTitle>
+                  <DialogDescription>Update event details</DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleEdit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-title">Event Title</Label>
+                    <Input
+                      id="edit-title"
+                      value={editFormData.title}
+                      onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-description">Description</Label>
+                    <Textarea
+                      id="edit-description"
+                      value={editFormData.description}
+                      onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-event_date">Event Date & Time</Label>
+                    <Input
+                      id="edit-event_date"
+                      type="datetime-local"
+                      value={editFormData.event_date}
+                      onChange={(e) => setEditFormData({ ...editFormData, event_date: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-location">Location</Label>
+                    <Input
+                      id="edit-location"
+                      value={editFormData.location}
+                      onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full">Update Event</Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+
+            <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Event</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this event? This action cannot be undone.
+                    All registrations and attendance records for this event will also be removed.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </CardHeader>
