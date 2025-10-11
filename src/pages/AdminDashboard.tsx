@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, LogOut, CheckCircle, XCircle, Clock, FileText, BarChart3, Calendar, History } from "lucide-react";
+import { ShieldCheck, LogOut, CheckCircle, XCircle, Clock, FileText, BarChart3, Calendar, History, Key } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -179,6 +179,27 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleResetPassword = async (email: string, fullName: string) => {
+    try {
+      const { error } = await supabase.functions.invoke("reset-faculty-password", {
+        body: { email },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password Reset",
+        description: `Password for ${fullName} has been reset to: FacultyTemp123!`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/");
@@ -264,33 +285,45 @@ const AdminDashboard = () => {
                     {getStatusBadge(approval.status)}
                   </div>
                 </CardHeader>
-                {approval.status === "pending" && (
-                  <CardContent className="flex gap-2">
+                <CardContent className="flex gap-2">
+                  {approval.status === "pending" && (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={() => viewIdCard(approval)}
+                        className="gap-2"
+                      >
+                        <FileText className="h-4 w-4" />
+                        View ID Card
+                      </Button>
+                      <Button
+                        onClick={() => handleApproval(approval.id, true)}
+                        className="gap-2 bg-green-500 hover:bg-green-600"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        Approve
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => handleApproval(approval.id, false)}
+                        className="gap-2"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Reject
+                      </Button>
+                    </>
+                  )}
+                  {approval.status === "approved" && (
                     <Button
                       variant="outline"
-                      onClick={() => viewIdCard(approval)}
+                      onClick={() => handleResetPassword(approval.email, approval.full_name)}
                       className="gap-2"
                     >
-                      <FileText className="h-4 w-4" />
-                      View ID Card
+                      <Key className="h-4 w-4" />
+                      Reset Password
                     </Button>
-                    <Button
-                      onClick={() => handleApproval(approval.id, true)}
-                      className="gap-2 bg-green-500 hover:bg-green-600"
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                      Approve
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleApproval(approval.id, false)}
-                      className="gap-2"
-                    >
-                      <XCircle className="h-4 w-4" />
-                      Reject
-                    </Button>
-                  </CardContent>
-                )}
+                  )}
+                </CardContent>
                 </Card>
               ))
             )}

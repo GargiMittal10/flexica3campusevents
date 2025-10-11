@@ -1,1 +1,13 @@
 project_id = "rzzmgtdporedsrpnxgvs"
+
+[functions.approve-faculty]
+verify_jwt = false
+
+[functions.create-admin]
+verify_jwt = false
+
+[functions.reset-faculty-password]
+verify_jwt = false
+
+[functions.send-notification]
+verify_jwt = false
