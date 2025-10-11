@@ -118,7 +118,7 @@ public class CampusEventsApplication {
 spring.application.name=campus-events-api
 
 # Server Configuration
-server.port=8080
+server.port=9091
 server.servlet.context-path=/api
 
 # Database Configuration
@@ -139,7 +139,7 @@ jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
 jwt.expiration=86400000
 
 # CORS Configuration
-cors.allowed.origins=http://localhost:5173,https://*.lovable.app
+cors.allowed.origins=http://localhost:5173,http://localhost:9091,https://*.lovable.app
 
 # File Upload Configuration
 spring.servlet.multipart.enabled=true
@@ -407,7 +407,7 @@ RUN ./mvnw clean package -DskipTests
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/campus-events-backend.jar app.jar
-EXPOSE 8080
+EXPOSE 9091
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
 
@@ -438,7 +438,7 @@ RESTful API for Campus Events Management System built with Spring Boot 3.2 and J
 3. Run: `mvn clean install`
 4. Start: `mvn spring-boot:run`
 
-API will be available at: http://localhost:8080/api
+API will be available at: http://localhost:9091/api
 
 ## API Documentation
 See SPRING_BOOT_CONTROLLERS.md for all endpoints.

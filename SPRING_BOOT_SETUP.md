@@ -11,7 +11,7 @@
 ### application.properties
 ```properties
 # Server Configuration
-server.port=8080
+server.port=9091
 spring.application.name=campus-events-api
 
 # Database Configuration
@@ -29,7 +29,7 @@ jwt.secret=your_secret_key_here_minimum_256_bits
 jwt.expiration=86400000
 
 # CORS Configuration
-cors.allowed.origins=http://localhost:5173,https://your-lovable-app.lovable.app
+cors.allowed.origins=http://localhost:5173,http://localhost:9091,https://your-lovable-app.lovable.app
 ```
 
 ## 2. Entity Classes
@@ -298,7 +298,7 @@ git push heroku main
 ### Test with cURL
 ```bash
 # Register User
-curl -X POST http://localhost:8080/api/auth/register \
+curl -X POST http://localhost:9091/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "fullName": "Test User",
@@ -309,7 +309,7 @@ curl -X POST http://localhost:8080/api/auth/register \
   }'
 
 # Login
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:9091/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -317,7 +317,7 @@ curl -X POST http://localhost:8080/api/auth/login \
   }'
 
 # Get Events (with JWT token)
-curl -X GET http://localhost:8080/api/events \
+curl -X GET http://localhost:9091/api/events \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 

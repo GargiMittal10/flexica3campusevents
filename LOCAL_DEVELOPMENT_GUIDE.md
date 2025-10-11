@@ -81,7 +81,7 @@ Copy the `pom.xml` file from the project root to `campus-events-backend/pom.xml`
 Create `src/main/resources/application.properties`:
 ```properties
 # Server Configuration
-server.port=8080
+server.port=9091
 spring.application.name=campus-events-api
 
 # Database Configuration
@@ -101,7 +101,7 @@ jwt.secret=mySecretKey123456789012345678901234567890123456789012345678901234
 jwt.expiration=86400000
 
 # CORS Configuration
-cors.allowed.origins=http://localhost:8080,http://localhost:5173
+cors.allowed.origins=http://localhost:9091,http://localhost:5173
 ```
 
 ## Step 4: Create All Java Files
@@ -197,7 +197,7 @@ Started CampusEventsApplication in X.XXX seconds
 ```
 
 ### 5.3 Verify Backend is Running
-Open browser and go to: `http://localhost:8080/api/events`
+Open browser and go to: `http://localhost:9091/api/events`
 You should see an empty array `[]` or authentication error (which is good - means it's running)
 
 ## Step 6: Test with Postman
@@ -207,7 +207,7 @@ See `POSTMAN_COLLECTION.md` for all endpoints
 
 ### 6.2 Test Registration
 ```bash
-POST http://localhost:8080/api/auth/register
+POST http://localhost:9091/api/auth/register
 Content-Type: application/json
 
 {
@@ -221,7 +221,7 @@ Content-Type: application/json
 
 ### 6.3 Test Login
 ```bash
-POST http://localhost:8080/api/auth/login
+POST http://localhost:9091/api/auth/login
 Content-Type: application/json
 
 {
@@ -234,7 +234,7 @@ Copy the JWT token from the response.
 
 ### 6.4 Test Protected Endpoint
 ```bash
-GET http://localhost:8080/api/events
+GET http://localhost:9091/api/events
 Authorization: Bearer YOUR_JWT_TOKEN_HERE
 ```
 
@@ -246,7 +246,7 @@ Create `src/services/springBootApi.ts`:
 ```typescript
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:8080/api';
+const BASE_URL = 'http://localhost:9091/api';
 
 // Create axios instance
 const api = axios.create({
@@ -401,19 +401,19 @@ You can toggle between Supabase and Spring Boot by changing the API service impo
 ## Step 9: Common Issues and Solutions
 
 ### Issue 1: Connection Refused
-**Solution**: Make sure Spring Boot is running on port 8080
+**Solution**: Make sure Spring Boot is running on port 9091
 ```bash
 # Check if port is in use
 # macOS/Linux
-lsof -i :8080
+lsof -i :9091
 # Windows
-netstat -ano | findstr :8080
+netstat -ano | findstr :9091
 ```
 
 ### Issue 2: CORS Error
 **Solution**: Add your React URL to CORS configuration in `application.properties`
 ```properties
-cors.allowed.origins=http://localhost:8080,http://localhost:5173,https://your-lovable-app.lovable.app
+cors.allowed.origins=http://localhost:9091,http://localhost:5173,https://your-lovable-app.lovable.app
 ```
 
 ### Issue 3: JWT Token Invalid
