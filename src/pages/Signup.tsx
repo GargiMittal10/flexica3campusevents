@@ -1,121 +1,67 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { GraduationCap, Mail, Lock, User, Hash, ArrowLeft, Upload } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { GraduationCap, Mail, Lock, User, Hash, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import authService from "@/services/authService";
+import { signupSchema, type SignupFormData } from "@/lib/validations";
 
 const Signup = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    studentId: "",
-    role: "",
-    password: "",
-    confirmPassword: ""
-  });
-  const [idCard, setIdCard] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<string>("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive"
-      });
-      return;
-    }
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+  });
 
-    if (!formData.role) {
-      toast({
-        title: "Error",
-        description: "Please select your role",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (formData.role === "faculty" && !idCard) {
-      toast({
-        title: "Error",
-        description: "Please upload your faculty ID card",
-        variant: "destructive"
-      });
-      return;
-    }
-
+  const onSubmit = async (data: SignupFormData) => {
     setLoading(true);
     
     try {
-      // Faculty signup - requires approval
-      if (formData.role === "faculty") {
-        // Upload ID card
-        const fileExt = idCard!.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from("faculty-id-cards")
-          .upload(fileName, idCard!);
+      const response = await authService.register({
+        fullName: data.fullName,
+        email: data.email,
+        password: data.password,
+        studentId: data.studentId,
+        role: data.role,
+      });
 
-        if (uploadError) throw uploadError;
-
-        // Create pending approval request
-        const { error: approvalError } = await supabase
-          .from("pending_faculty_approvals")
-          .insert({
-            full_name: formData.name,
-            email: formData.email,
-            student_id: formData.studentId,
-            id_card_url: fileName,
-          });
-
-        if (approvalError) throw approvalError;
-
-        toast({
-          title: "Application Submitted",
-          description: "Your faculty application has been submitted for admin approval. You'll receive an email once approved.",
-        });
-        
-        navigate("/login");
+      toast({
+        title: "Success!",
+        description: "Account created successfully",
+      });
+      
+      // Redirect based on role
+      if (response.role === "FACULTY") {
+        navigate("/faculty-dashboard");
+      } else if (response.role === "ADMIN") {
+        navigate("/admin-dashboard");
       } else {
-        // Student signup - direct registration
-        const { data, error } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          options: {
-            data: {
-              full_name: formData.name,
-              student_id: formData.studentId,
-              role: formData.role
-            },
-            emailRedirectTo: `${window.location.origin}/`
-          }
-        });
-
-        if (error) throw error;
-
-        toast({
-          title: "Success!",
-          description: "Account created successfully"
-        });
-        
         navigate("/student-dashboard");
       }
     } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 
+        error.response?.data?.errors ? 
+        Object.values(error.response.data.errors).join(", ") : 
+        "Failed to create account";
+      
       toast({
         title: "Error",
-        description: error.message,
-        variant: "destructive"
+        description: errorMessage,
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -144,21 +90,22 @@ const Signup = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="fullName">Full Name</Label>
               <div className="relative">
                 <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="name"
+                  id="fullName"
                   type="text"
                   placeholder="John Doe"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
                   className="pl-10"
-                  required
+                  {...register("fullName")}
                 />
               </div>
+              {errors.fullName && (
+                <p className="text-sm text-destructive">{errors.fullName.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -169,12 +116,13 @@ const Signup = () => {
                   id="email"
                   type="email"
                   placeholder="student@university.edu"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
                   className="pl-10"
-                  required
+                  {...register("email")}
                 />
               </div>
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -184,54 +132,37 @@ const Signup = () => {
                 <Input
                   id="studentId"
                   type="text"
-                  placeholder="12345"
-                  value={formData.studentId}
-                  onChange={(e) => setFormData({...formData, studentId: e.target.value})}
+                  placeholder="STU12345"
                   className="pl-10"
-                  required
+                  {...register("studentId")}
                 />
               </div>
+              {errors.studentId && (
+                <p className="text-sm text-destructive">{errors.studentId.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="role">I am a</Label>
-              <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
+              <Select 
+                value={selectedRole} 
+                onValueChange={(value) => {
+                  setSelectedRole(value);
+                  setValue("role", value as "STUDENT" | "FACULTY");
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="faculty">Faculty</SelectItem>
+                  <SelectItem value="STUDENT">Student</SelectItem>
+                  <SelectItem value="FACULTY">Faculty</SelectItem>
                 </SelectContent>
               </Select>
+              {errors.role && (
+                <p className="text-sm text-destructive">{errors.role.message}</p>
+              )}
             </div>
-
-            {formData.role === "faculty" && (
-              <div className="space-y-2">
-                <Label htmlFor="idCard">Faculty ID Card *</Label>
-                <Alert>
-                  <AlertDescription>
-                    Your application will be reviewed by an administrator before you can login
-                  </AlertDescription>
-                </Alert>
-                <div className="relative">
-                  <Input
-                    id="idCard"
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={(e) => setIdCard(e.target.files?.[0] || null)}
-                    className="cursor-pointer"
-                    required
-                  />
-                  <Upload className="absolute right-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
-                </div>
-                {idCard && (
-                  <p className="text-sm text-muted-foreground">
-                    Selected: {idCard.name}
-                  </p>
-                )}
-              </div>
-            )}
             
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -241,12 +172,16 @@ const Signup = () => {
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
                   className="pl-10"
-                  required
+                  {...register("password")}
                 />
               </div>
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Must contain uppercase, lowercase, and number
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -257,12 +192,13 @@ const Signup = () => {
                   id="confirmPassword"
                   type="password"
                   placeholder="••••••••"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
                   className="pl-10"
-                  required
+                  {...register("confirmPassword")}
                 />
               </div>
+              {errors.confirmPassword && (
+                <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+              )}
             </div>
 
             <Button 

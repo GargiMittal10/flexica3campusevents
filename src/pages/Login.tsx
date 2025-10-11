@@ -1,113 +1,59 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { GraduationCap, Mail, Lock, ArrowLeft, ShieldCheck } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import authService from "@/services/authService";
+import { loginSchema, type LoginFormData } from "@/lib/validations";
 
 const Login = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resetEmail, setResetEmail] = useState("");
-  const [resetLoading, setResetLoading] = useState(false);
-  const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
+      const response = await authService.login({
+        email: data.email,
+        password: data.password,
       });
-
-      if (error) throw error;
-
-      // Get user profile to determine role
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user.id)
-        .single();
 
       toast({
         title: "Success!",
-        description: "Logged in successfully"
+        description: "Logged in successfully",
       });
 
       // Redirect based on role
-      if (profile?.role === "faculty") {
+      if (response.role === "FACULTY") {
         navigate("/faculty-dashboard");
+      } else if (response.role === "ADMIN") {
+        navigate("/admin-dashboard");
       } else {
         navigate("/student-dashboard");
       }
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setResetLoading(true);
-
-    try {
-      // First, check if the email exists in the database
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("email", resetEmail)
-        .maybeSingle();
-
-      if (profileError) {
-        throw profileError;
-      }
-
-      // If email doesn't exist, show error
-      if (!profile) {
-        toast({
-          title: "Email Not Found",
-          description: "This email is not registered in our system. Please check and try again.",
-          variant: "destructive",
-        });
-        setResetLoading(false);
-        return;
-      }
-
-      // Email exists, proceed with password reset
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Password Reset Email Sent",
-        description: "Check your email for the password reset link.",
-      });
-      setResetDialogOpen(false);
-      setResetEmail("");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
+        description: error.response?.data?.message || "Invalid email or password",
         variant: "destructive",
       });
     } finally {
-      setResetLoading(false);
+      setLoading(false);
     }
   };
 
@@ -133,7 +79,7 @@ const Login = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -142,48 +88,21 @@ const Login = () => {
                   id="email"
                   type="email"
                   placeholder="student@university.edu"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
-                  required
+                  {...register("email")}
                 />
               </div>
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email.message}</p>
+              )}
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-                  <DialogTrigger asChild>
-                    <button className="text-sm text-primary hover:underline">
-                      Forgot password?
-                    </button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Reset Password</DialogTitle>
-                      <DialogDescription>
-                        Enter your email address and we'll send you a password reset link.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handlePasswordReset} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="reset-email">Email</Label>
-                        <Input
-                          id="reset-email"
-                          type="email"
-                          placeholder="your@email.com"
-                          value={resetEmail}
-                          onChange={(e) => setResetEmail(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <Button type="submit" className="w-full" disabled={resetLoading}>
-                        {resetLoading ? "Sending..." : "Send Reset Link"}
-                      </Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                <Link to="/reset-password" className="text-sm text-primary hover:underline">
+                  Forgot password?
+                </Link>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -191,12 +110,13 @@ const Login = () => {
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
-                  required
+                  {...register("password")}
                 />
               </div>
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password.message}</p>
+              )}
             </div>
 
             <Button 
