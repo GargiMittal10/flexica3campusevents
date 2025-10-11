@@ -102,9 +102,6 @@ const AdminLogin = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground text-center mb-6">
-            Test admin: admin@test.com / Admin123!
-          </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
