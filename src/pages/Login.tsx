@@ -214,11 +214,17 @@ const Login = () => {
               </Link>
             </div>
 
-            <div className="text-center pt-4 border-t border-border/50">
-              <Link to="/admin-login" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4" />
-                Admin Login
+            <div className="text-center pt-4 border-t border-border/50 space-y-2">
+              <Link to="/faculty-login" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2">
+                <GraduationCap className="h-4 w-4" />
+                Faculty Login
               </Link>
+              <div>
+                <Link to="/admin-login" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4" />
+                  Admin Login
+                </Link>
+              </div>
             </div>
           </form>
         </CardContent>

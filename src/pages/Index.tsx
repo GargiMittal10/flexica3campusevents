@@ -49,7 +49,12 @@ const Index = () => {
                 </Link>
                 <Link to="/login">
                   <Button size="lg" variant="outline" className="hover-scale">
-                    Sign In
+                    Student Login
+                  </Button>
+                </Link>
+                <Link to="/faculty-login">
+                  <Button size="lg" variant="outline" className="hover-scale">
+                    Faculty Login
                   </Button>
                 </Link>
               </div>
