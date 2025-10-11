@@ -4,17 +4,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { MessageSquare, Star, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MessageSquare, Star, TrendingUp, Play, Square } from "lucide-react";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 interface EventFeedbackViewProps {
   facultyId: string;
 }
 
 const EventFeedbackView = ({ facultyId }: EventFeedbackViewProps) => {
+  const { toast } = useToast();
   const [events, setEvents] = useState<any[]>([]);
   const [selectedEvent, setSelectedEvent] = useState("");
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
+  const [activeFeedbackSession, setActiveFeedbackSession] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
     averageRating: 0,
     totalFeedback: 0,
@@ -28,8 +33,97 @@ const EventFeedbackView = ({ facultyId }: EventFeedbackViewProps) => {
   useEffect(() => {
     if (selectedEvent) {
       loadFeedback();
+      checkActiveFeedbackSession();
+
+      // Subscribe to feedback session changes
+      const channel = supabase
+        .channel('feedback-sessions-faculty')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'feedback_sessions',
+            filter: `event_id=eq.${selectedEvent}`
+          },
+          () => checkActiveFeedbackSession()
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [selectedEvent]);
+
+  const checkActiveFeedbackSession = async () => {
+    const { data } = await supabase
+      .from("feedback_sessions")
+      .select("*")
+      .eq("event_id", selectedEvent)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    setActiveFeedbackSession(data);
+  };
+
+  const handleStartFeedback = async () => {
+    if (!selectedEvent) return;
+    
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { error } = await supabase
+      .from("feedback_sessions")
+      .insert({
+        event_id: selectedEvent,
+        created_by: user?.id,
+        is_active: true,
+      });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to start feedback collection",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Feedback Enabled",
+        description: "Students can now submit feedback for this event",
+      });
+      checkActiveFeedbackSession();
+    }
+    setLoading(false);
+  };
+
+  const handleEndFeedback = async () => {
+    if (!activeFeedbackSession) return;
+
+    setLoading(true);
+    const { error } = await supabase
+      .from("feedback_sessions")
+      .update({
+        is_active: false,
+        ended_at: new Date().toISOString(),
+      })
+      .eq("id", activeFeedbackSession.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to end feedback collection",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Feedback Disabled",
+        description: "Students can no longer submit feedback for this event",
+      });
+      setActiveFeedbackSession(null);
+    }
+    setLoading(false);
+  };
 
   const loadEvents = async () => {
     const { data } = await supabase
@@ -112,6 +206,36 @@ const EventFeedbackView = ({ facultyId }: EventFeedbackViewProps) => {
               </SelectContent>
             </Select>
           </div>
+
+          {selectedEvent && (
+            <div className="flex items-center gap-2 pt-2">
+              {activeFeedbackSession ? (
+                <>
+                  <Badge className="bg-green-500">Feedback Active</Badge>
+                  <Button
+                    onClick={handleEndFeedback}
+                    disabled={loading}
+                    variant="destructive"
+                    size="sm"
+                    className="ml-auto"
+                  >
+                    <Square className="h-4 w-4 mr-2" />
+                    End Feedback
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  onClick={handleStartFeedback}
+                  disabled={loading}
+                  size="sm"
+                  className="ml-auto"
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Enable Feedback
+                </Button>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

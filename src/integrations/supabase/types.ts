@@ -220,6 +220,44 @@ export type Database = {
           },
         ]
       }
+      feedback_sessions: {
+        Row: {
+          created_at: string
+          created_by: string
+          ended_at: string | null
+          event_id: string
+          id: string
+          is_active: boolean
+          started_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          ended_at?: string | null
+          event_id: string
+          id?: string
+          is_active?: boolean
+          started_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          ended_at?: string | null
+          event_id?: string
+          id?: string
+          is_active?: boolean
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_sessions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pending_faculty_approvals: {
         Row: {
           created_at: string

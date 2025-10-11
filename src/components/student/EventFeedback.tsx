@@ -16,12 +16,42 @@ interface EventFeedbackProps {
 const EventFeedback = ({ studentId }: EventFeedbackProps) => {
   const [attendedEvents, setAttendedEvents] = useState<any[]>([]);
   const [submittedFeedbackIds, setSubmittedFeedbackIds] = useState<Set<string>>(new Set());
+  const [activeFeedbackSessions, setActiveFeedbackSessions] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     loadAttendedEvents();
+    loadActiveFeedbackSessions();
+
+    // Subscribe to feedback session changes
+    const channel = supabase
+      .channel('feedback-sessions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'feedback_sessions'
+        },
+        () => loadActiveFeedbackSessions()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [studentId]);
+
+  const loadActiveFeedbackSessions = async () => {
+    const { data } = await supabase
+      .from("feedback_sessions")
+      .select("event_id")
+      .eq("is_active", true);
+
+    const activeIds = new Set(data?.map(s => s.event_id) || []);
+    setActiveFeedbackSessions(activeIds);
+  };
 
   const loadAttendedEvents = async () => {
     // Get events the student has attended
@@ -84,6 +114,7 @@ const EventFeedback = ({ studentId }: EventFeedbackProps) => {
                   event={event}
                   studentId={studentId}
                   hasFeedback={hasFeedback}
+                  isActive={activeFeedbackSessions.has(event.id)}
                   onFeedbackSubmitted={() => {
                     setSubmittedFeedbackIds(prev => new Set([...prev, event.id]));
                   }}
@@ -101,10 +132,11 @@ interface FeedbackCardProps {
   event: any;
   studentId: string;
   hasFeedback: boolean;
+  isActive: boolean;
   onFeedbackSubmitted: () => void;
 }
 
-const FeedbackCard = ({ event, studentId, hasFeedback, onFeedbackSubmitted }: FeedbackCardProps) => {
+const FeedbackCard = ({ event, studentId, hasFeedback, isActive, onFeedbackSubmitted }: FeedbackCardProps) => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -171,7 +203,7 @@ const FeedbackCard = ({ event, studentId, hasFeedback, onFeedbackSubmitted }: Fe
           </div>
         </div>
 
-        {!hasFeedback && (
+        {!hasFeedback && isActive && (
           <div className="space-y-4 pt-4 border-t">
             <div className="space-y-2">
               <Label>Rating</Label>
@@ -213,6 +245,14 @@ const FeedbackCard = ({ event, studentId, hasFeedback, onFeedbackSubmitted }: Fe
             >
               {submitting ? "Submitting..." : "Submit Feedback"}
             </Button>
+          </div>
+        )}
+        
+        {!hasFeedback && !isActive && (
+          <div className="pt-4 border-t">
+            <p className="text-sm text-muted-foreground text-center">
+              Feedback is not currently enabled for this event
+            </p>
           </div>
         )}
       </div>
