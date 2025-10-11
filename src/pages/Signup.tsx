@@ -53,13 +53,23 @@ const Signup = () => {
         navigate("/student-dashboard");
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 
-        error.response?.data?.errors ? 
-        Object.values(error.response.data.errors).join(", ") : 
-        "Failed to create account";
+      console.error("Signup error:", error);
+      
+      let errorMessage = "Failed to create account";
+      
+      // Check if backend is not running
+      if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
+        errorMessage = "Cannot connect to server. Make sure the backend is running on http://localhost:9091";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors) {
+        errorMessage = Object.values(error.response.data.errors).join(", ");
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
       
       toast({
-        title: "Error",
+        title: "Registration Failed",
         description: errorMessage,
         variant: "destructive",
       });

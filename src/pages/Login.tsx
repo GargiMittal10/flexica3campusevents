@@ -47,9 +47,22 @@ const Login = () => {
         navigate("/student-dashboard");
       }
     } catch (error: any) {
+      console.error("Login error:", error);
+      
+      let errorMessage = "Invalid email or password";
+      
+      // Check if backend is not running
+      if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
+        errorMessage = "Cannot connect to server. Make sure the backend is running on http://localhost:9091";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "Error",
-        description: error.response?.data?.message || "Invalid email or password",
+        title: "Login Failed",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
