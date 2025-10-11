@@ -3,7 +3,7 @@
 ## Prerequisites
 - Java 17 or higher
 - Maven 3.8+
-- PostgreSQL 14+
+- MySQL 8.0+
 - IntelliJ IDEA or Eclipse
 
 ## 1. Database Configuration
@@ -15,12 +15,14 @@ server.port=8080
 spring.application.name=campus-events-api
 
 # Database Configuration
-spring.datasource.url=jdbc:postgresql://localhost:5432/campus_events
-spring.datasource.username=your_db_username
-spring.datasource.password=your_db_password
+spring.datasource.url=jdbc:mysql://localhost:3306/campus_events?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+spring.datasource.username=root
+spring.datasource.password=your_password
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
 
 # JWT Configuration
 jwt.secret=your_secret_key_here_minimum_256_bits
@@ -274,7 +276,7 @@ mvn spring-boot:run
 ### Deploy to Railway (Recommended)
 1. Create account at https://railway.app/
 2. Connect your GitHub repository
-3. Add PostgreSQL database service
+3. Add MySQL database service
 4. Set environment variables in Railway dashboard
 5. Deploy automatically on git push
 
@@ -284,8 +286,8 @@ mvn spring-boot:run
 heroku login
 heroku create campus-events-api
 
-# Add PostgreSQL
-heroku addons:create heroku-postgresql:mini
+# Add MySQL
+heroku addons:create jawsdb:kitefin
 
 # Deploy
 git push heroku main
