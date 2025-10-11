@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QrCode as QrCodeIcon, Calendar, BarChart3, LogOut, CalendarClock, MessageSquare } from "lucide-react";
@@ -11,7 +10,6 @@ import RegisteredEvents from "@/components/student/RegisteredEvents";
 import AttendanceStats from "@/components/student/AttendanceStats";
 import UpcomingEvents from "@/components/student/UpcomingEvents";
 import EventFeedback from "@/components/student/EventFeedback";
-import Navbar from "@/components/Navbar";
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -70,8 +68,7 @@ const StudentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto px-4 pt-24 pb-16">
+      <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-4xl font-bold">Welcome, {profile?.full_name}</h1>
