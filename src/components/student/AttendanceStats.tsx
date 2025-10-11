@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { BarChart3, TrendingUp, Calendar, Award } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { BarChart3, TrendingUp, Calendar, Award, CheckCircle2, XCircle } from "lucide-react";
+import { format } from "date-fns";
 
 interface AttendanceStatsProps {
   studentId: string;
@@ -14,6 +16,7 @@ const AttendanceStats = ({ studentId }: AttendanceStatsProps) => {
     totalAttended: 0,
     percentage: 0,
   });
+  const [attendanceHistory, setAttendanceHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,15 +24,39 @@ const AttendanceStats = ({ studentId }: AttendanceStatsProps) => {
   }, [studentId]);
 
   const loadStats = async () => {
+    // Get all registered events with attendance status
     const { data: registrations } = await supabase
       .from("event_registrations")
-      .select("id, event_id")
-      .eq("student_id", studentId);
+      .select(`
+        id,
+        event_id,
+        events (
+          id,
+          title,
+          event_date,
+          location
+        )
+      `)
+      .eq("student_id", studentId)
+      .order("events(event_date)", { ascending: false });
 
+    // Get all attendance records
     const { data: attendance } = await supabase
       .from("attendance")
-      .select("id")
+      .select("event_id, marked_at")
       .eq("student_id", studentId);
+
+    const attendanceMap = new Map(attendance?.map(a => [a.event_id, a.marked_at]) || []);
+    
+    // Combine data
+    const history = registrations?.map(reg => ({
+      eventId: reg.events.id,
+      title: reg.events.title,
+      eventDate: reg.events.event_date,
+      location: reg.events.location,
+      attended: attendanceMap.has(reg.events.id),
+      markedAt: attendanceMap.get(reg.events.id),
+    })) || [];
 
     const totalRegistered = registrations?.length || 0;
     const totalAttended = attendance?.length || 0;
@@ -40,6 +67,7 @@ const AttendanceStats = ({ studentId }: AttendanceStatsProps) => {
       totalAttended,
       percentage: Math.round(percentage),
     });
+    setAttendanceHistory(history);
     setLoading(false);
   };
 
@@ -120,6 +148,54 @@ const AttendanceStats = ({ studentId }: AttendanceStatsProps) => {
                 <p className="font-semibold text-red-700 dark:text-red-400">Needs Improvement</p>
                 <p className="text-sm text-red-600 dark:text-red-500">Attend more events to boost your attendance!</p>
               </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-2">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-primary" />
+            Attendance History (Date-wise)
+          </CardTitle>
+          <CardDescription>Your complete attendance record for all events</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {attendanceHistory.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">No events registered yet</p>
+          ) : (
+            <div className="space-y-3">
+              {attendanceHistory.map((record, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
+                >
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{record.title}</p>
+                      {record.attended ? (
+                        <Badge className="bg-green-500 hover:bg-green-600">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Present
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive">
+                          <XCircle className="h-3 w-3 mr-1" />
+                          Absent
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span>Event Date: {format(new Date(record.eventDate), "PPP")}</span>
+                      {record.attended && record.markedAt && (
+                        <span>Marked: {format(new Date(record.markedAt), "PPp")}</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">{record.location}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>

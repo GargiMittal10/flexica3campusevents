@@ -4,11 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { QrCode as QrCodeIcon, Calendar, BarChart3, LogOut } from "lucide-react";
+import { QrCode as QrCodeIcon, Calendar, BarChart3, LogOut, CalendarClock, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import QRCodeDisplay from "@/components/student/QRCodeDisplay";
 import RegisteredEvents from "@/components/student/RegisteredEvents";
 import AttendanceStats from "@/components/student/AttendanceStats";
+import UpcomingEvents from "@/components/student/UpcomingEvents";
+import EventFeedback from "@/components/student/EventFeedback";
 import Navbar from "@/components/Navbar";
 
 const StudentDashboard = () => {
@@ -82,23 +84,35 @@ const StudentDashboard = () => {
         </div>
 
         <Tabs defaultValue="qr" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-4xl grid-cols-5">
             <TabsTrigger value="qr">
               <QrCodeIcon className="h-4 w-4 mr-2" />
               My QR Code
             </TabsTrigger>
+            <TabsTrigger value="upcoming">
+              <CalendarClock className="h-4 w-4 mr-2" />
+              Upcoming
+            </TabsTrigger>
             <TabsTrigger value="events">
               <Calendar className="h-4 w-4 mr-2" />
-              Events
+              My Events
             </TabsTrigger>
             <TabsTrigger value="stats">
               <BarChart3 className="h-4 w-4 mr-2" />
-              Statistics
+              Attendance
+            </TabsTrigger>
+            <TabsTrigger value="feedback">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Feedback
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="qr">
             <QRCodeDisplay profile={profile} />
+          </TabsContent>
+
+          <TabsContent value="upcoming">
+            <UpcomingEvents studentId={profile?.id} />
           </TabsContent>
 
           <TabsContent value="events">
@@ -107,6 +121,10 @@ const StudentDashboard = () => {
 
           <TabsContent value="stats">
             <AttendanceStats studentId={profile?.id} />
+          </TabsContent>
+
+          <TabsContent value="feedback">
+            <EventFeedback studentId={profile?.id} />
           </TabsContent>
         </Tabs>
       </div>
