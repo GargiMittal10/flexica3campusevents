@@ -3,12 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, QrCode, BarChart3, LogOut, MessageSquare, QrCodeIcon } from "lucide-react";
+import { Calendar, QrCode, BarChart3, LogOut, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import EventManagement from "@/components/faculty/EventManagement";
 import QRScanner from "@/components/faculty/QRScanner";
 import AnalyticsDashboard from "@/components/faculty/AnalyticsDashboard";
-import EventQRCode from "@/components/faculty/EventQRCode";
 import EventFeedbackView from "@/components/faculty/EventFeedbackView";
 
 const FacultyDashboard = () => {
@@ -81,18 +80,14 @@ const FacultyDashboard = () => {
         </div>
 
         <Tabs defaultValue="events" className="space-y-6">
-          <TabsList className="grid w-full max-w-4xl grid-cols-5">
+          <TabsList className="grid w-full max-w-4xl grid-cols-4">
             <TabsTrigger value="events">
               <Calendar className="h-4 w-4 mr-2" />
               Events
             </TabsTrigger>
-            <TabsTrigger value="qr-generator">
-              <QrCodeIcon className="h-4 w-4 mr-2" />
-              QR Generator
-            </TabsTrigger>
             <TabsTrigger value="scanner">
               <QrCode className="h-4 w-4 mr-2" />
-              Scanner
+              Attendance
             </TabsTrigger>
             <TabsTrigger value="feedback">
               <MessageSquare className="h-4 w-4 mr-2" />
@@ -106,10 +101,6 @@ const FacultyDashboard = () => {
 
           <TabsContent value="events">
             <EventManagement facultyId={profile?.id} />
-          </TabsContent>
-
-          <TabsContent value="qr-generator">
-            <EventQRCode facultyId={profile?.id} />
           </TabsContent>
 
           <TabsContent value="scanner">
