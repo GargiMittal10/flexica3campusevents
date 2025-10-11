@@ -1,7 +1,7 @@
 # Spring Boot Backend Setup Guide
 
 ## Prerequisites
-- Java 17 or higher
+- Java 21
 - Maven 3.8+
 - MySQL 8.0+
 - IntelliJ IDEA or Eclipse

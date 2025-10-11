@@ -8,15 +8,15 @@ This guide will help you set up the entire Campus Events Management System local
 
 ## Step 1: Install Prerequisites
 
-### 1.1 Install Java 17
+### 1.1 Install Java 21
 ```bash
 # Check if Java is installed
 java -version
 
 # If not installed:
-# Windows: Download from https://adoptium.net/
-# macOS: brew install openjdk@17
-# Linux: sudo apt install openjdk-17-jdk
+# Windows: Download from https://adoptium.net/temurin/releases/?version=21
+# macOS: brew install openjdk@21
+# Linux: sudo apt install openjdk-21-jdk
 ```
 
 ### 1.2 Install Maven
