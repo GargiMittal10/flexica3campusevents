@@ -61,7 +61,7 @@ public class FeedbackService {
             map.put("studentName", fb.getStudent().getFullName());
             map.put("rating", fb.getRating());
             map.put("comment", fb.getComment());
-            map.put("submittedAt", fb.getCreatedAt());
+            map.put("submittedAt", fb.getSubmittedAt());
             return map;
         }).collect(Collectors.toList());
     }

@@ -26,6 +26,6 @@ public class EventFeedback {
     @Column(columnDefinition = "TEXT")
     private String comment;
     
-    @Column(nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "submitted_at", nullable = false)
+    private LocalDateTime submittedAt = LocalDateTime.now();
 }
