@@ -60,9 +60,12 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                .requestMatchers("/api/faculty/**").hasAnyAuthority("FACULTY", "ADMIN")
-                .requestMatchers("/api/student/**").hasAnyAuthority("STUDENT", "FACULTY", "ADMIN")
+                .requestMatchers("/api/events", "/api/events/**").permitAll()
+                .requestMatchers("/api/users/my-qr-code").hasAuthority("STUDENT")
+                .requestMatchers("/api/attendance/mark").hasAnyAuthority("FACULTY", "ADMIN")
+                .requestMatchers("/api/attendance/event/**").hasAnyAuthority("FACULTY", "ADMIN")
+                .requestMatchers("/api/analytics/**").hasAnyAuthority("FACULTY", "ADMIN", "STUDENT")
+                .requestMatchers("/api/feedback/event/**").hasAnyAuthority("FACULTY", "ADMIN", "STUDENT")
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
