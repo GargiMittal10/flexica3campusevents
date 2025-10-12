@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QrCode as QrCodeIcon, Calendar, BarChart3, LogOut, CalendarClock, MessageSquare } from "lucide-react";
@@ -10,6 +9,7 @@ import RegisteredEvents from "@/components/student/RegisteredEvents";
 import AttendanceStats from "@/components/student/AttendanceStats";
 import UpcomingEvents from "@/components/student/UpcomingEvents";
 import EventFeedback from "@/components/student/EventFeedback";
+import authService from "@/services/authService";
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -21,40 +21,35 @@ const StudentDashboard = () => {
     checkUser();
   }, []);
 
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+  const checkUser = () => {
+    const user = authService.getCurrentUser();
     
     if (!user) {
       navigate("/login");
       return;
     }
 
-    const { data: profileData, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-    if (error || !profileData) {
-      toast({
-        title: "Error",
-        description: "Failed to load profile",
-        variant: "destructive",
-      });
+    if (user.role !== "STUDENT") {
+      if (user.role === "FACULTY") {
+        navigate("/faculty-dashboard");
+      } else if (user.role === "ADMIN") {
+        navigate("/admin-dashboard");
+      }
       return;
     }
 
-    if (profileData.role !== "student") {
-      navigate("/faculty-dashboard");
-      return;
-    }
-
-    setProfile(profileData);
+    setProfile({
+      id: user.id,
+      full_name: user.fullName,
+      email: user.email,
+      student_id: user.id,
+      role: user.role
+    });
     setLoading(false);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    authService.logout();
     navigate("/");
   };
 
