@@ -5,7 +5,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "event_feedback")
+@Table(name = "feedback")
 @Data
 public class EventFeedback {
     @Id
