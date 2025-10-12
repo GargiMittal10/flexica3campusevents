@@ -41,9 +41,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     checkAdminAccess();
-    fetchPendingApprovals();
-    fetchEvents();
-    fetchAttendance();
+    setLoading(false);
   }, []);
 
   const checkAdminAccess = () => {
@@ -70,29 +68,32 @@ const AdminDashboard = () => {
     }
   };
 
-  const fetchPendingApprovals = async () => {
-    // TODO: Implement with MySQL backend API
-    setLoading(false);
+  const viewIdCard = (approval: PendingApproval) => {
+    toast({
+      title: "Feature Not Available",
+      description: "This feature requires MySQL backend API implementation",
+      variant: "default",
+    });
   };
 
-  const fetchEvents = async () => {
-    // TODO: Implement with MySQL backend API
+  const handleApproval = (approvalId: string, approved: boolean) => {
+    toast({
+      title: "Feature Not Available",
+      description: "This feature requires MySQL backend API implementation",
+      variant: "default",
+    });
   };
 
-  const fetchAttendance = async () => {
-    // TODO: Implement with MySQL backend API
+  const handleResetPassword = (email: string, fullName: string) => {
+    toast({
+      title: "Feature Not Available",
+      description: "This feature requires MySQL backend API implementation",
+      variant: "default",
+    });
   };
 
-  const viewIdCard = async (approval: PendingApproval) => {
-    // TODO: Implement with MySQL backend API
-  };
-
-  const handleApproval = async (approvalId: string, approved: boolean) => {
-    // TODO: Implement with MySQL backend API
-  };
-
-  const handleResetPassword = async (email: string, fullName: string) => {
-    // TODO: Implement with MySQL backend API
+  const fetchEvents = () => {
+    // Placeholder - no MySQL API yet
   };
 
   const handleLogout = () => {
