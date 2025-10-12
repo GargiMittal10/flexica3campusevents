@@ -155,21 +155,21 @@ VALUES (
     UUID(),
     'System Administrator',
     'admin@campusevents.com',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
     'ADMIN001',
     'ADMIN',
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
 );
 
--- Insert sample student user (password: student123)
+-- Insert sample student user (password: student123)  
 -- BCrypt hash for 'student123'
 INSERT INTO users (id, full_name, email, password, student_id, role, qr_code_data, created_at, updated_at)
 VALUES (
     UUID(),
     'John Doe',
     'student@test.com',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
     'STU001',
     'STUDENT',
     'STUDENT:sample-id:STU001:1234567890',
@@ -178,13 +178,13 @@ VALUES (
 );
 
 -- Insert sample faculty user (password: faculty123)
--- BCrypt hash for 'faculty123'
+-- BCrypt hash for 'faculty123'  
 INSERT INTO users (id, full_name, email, password, student_id, role, created_at, updated_at)
 VALUES (
     UUID(),
     'Jane Smith',
     'faculty@test.com',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
     'FAC001',
     'FACULTY',
     CURRENT_TIMESTAMP,
