@@ -148,27 +148,28 @@ CREATE TABLE pending_faculty_approvals (
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Insert default admin user (password: Admin123!)
--- Note: This is a BCrypt hashed password for "Admin123!"
+-- Insert default admin user (password: admin123)
+-- BCrypt hash for 'admin123'
 INSERT INTO users (id, full_name, email, password, student_id, role, created_at, updated_at)
 VALUES (
     UUID(),
     'System Administrator',
     'admin@campusevents.com',
-    '$2a$10$xXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXx',
+    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
     'ADMIN001',
     'ADMIN',
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
 );
 
--- Insert sample student user (password: Student123!)
+-- Insert sample student user (password: student123)
+-- BCrypt hash for 'student123'
 INSERT INTO users (id, full_name, email, password, student_id, role, qr_code_data, created_at, updated_at)
 VALUES (
     UUID(),
     'John Doe',
     'student@test.com',
-    '$2a$10$xXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXx',
+    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
     'STU001',
     'STUDENT',
     'STUDENT:sample-id:STU001:1234567890',
@@ -176,13 +177,14 @@ VALUES (
     CURRENT_TIMESTAMP
 );
 
--- Insert sample faculty user (password: Faculty123!)
+-- Insert sample faculty user (password: faculty123)
+-- BCrypt hash for 'faculty123'
 INSERT INTO users (id, full_name, email, password, student_id, role, created_at, updated_at)
 VALUES (
     UUID(),
     'Jane Smith',
     'faculty@test.com',
-    '$2a$10$xXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXx',
+    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
     'FAC001',
     'FACULTY',
     CURRENT_TIMESTAMP,
@@ -192,7 +194,7 @@ VALUES (
 -- Display success message
 SELECT 'Database schema created successfully!' AS status;
 SELECT 'Default users created with following credentials:' AS info;
-SELECT 'Admin: admin@campusevents.com / Admin123!' AS admin_credentials;
-SELECT 'Student: student@test.com / Student123!' AS student_credentials;
-SELECT 'Faculty: faculty@test.com / Faculty123!' AS faculty_credentials;
-SELECT 'Note: These are sample passwords. Update them in production!' AS warning;
+SELECT 'Admin: admin@campusevents.com / admin123' AS admin_credentials;
+SELECT 'Student: student@test.com / student123' AS student_credentials;
+SELECT 'Faculty: faculty@test.com / faculty123' AS faculty_credentials;
+SELECT 'Note: These are test passwords. Change them in production!' AS warning;

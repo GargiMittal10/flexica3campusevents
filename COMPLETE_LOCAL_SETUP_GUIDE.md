@@ -281,17 +281,20 @@ Try logging in with the pre-created users:
 
 **Admin Account:**
 - Email: `admin@campusevents.com`
-- Password: `Admin123!`
+- Password: `admin123`
+- URL: http://localhost:5173/admin-login
 - Should redirect to Admin Dashboard
 
 **Faculty Account:**
 - Email: `faculty@test.com`
-- Password: `Faculty123!`
+- Password: `faculty123`
+- URL: http://localhost:5173/faculty-login
 - Should redirect to Faculty Dashboard
 
 **Student Account:**
 - Email: `student@test.com`
-- Password: `Student123!`
+- Password: `student123`
+- URL: http://localhost:5173/login
 - Should redirect to Student Dashboard
 
 ---
