@@ -6,7 +6,7 @@ This guide will help you set up the complete project on your local machine from 
 
 Before starting, make sure you have:
 
-- [x] **Java 21** installed ([Download](https://www.oracle.com/java/technologies/downloads/#java21))
+- [x] **Java 17** installed ([Download](https://www.oracle.com/java/technologies/downloads/#java17))
 - [x] **Maven 3.8+** installed ([Download](https://maven.apache.org/download.cgi))
 - [x] **MySQL 8.0+** installed and running ([Download](https://dev.mysql.com/downloads/mysql/))
 - [x] **Node.js 18+** and npm installed ([Download](https://nodejs.org/))

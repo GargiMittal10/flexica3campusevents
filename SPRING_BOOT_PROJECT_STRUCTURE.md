@@ -1,4 +1,4 @@
-# Complete Spring Boot Project Structure with Java 21
+# Complete Spring Boot Project Structure with Java 17
 
 ## Directory Structure
 
@@ -415,10 +415,10 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 ```markdown
 # Campus Events Backend API
 
-RESTful API for Campus Events Management System built with Spring Boot 3.2 and Java 21.
+RESTful API for Campus Events Management System built with Spring Boot 3.2 and Java 17.
 
 ## Technologies
-- Java 21
+- Java 17
 - Spring Boot 3.2.5
 - Spring Security + JWT
 - PostgreSQL
@@ -428,7 +428,7 @@ RESTful API for Campus Events Management System built with Spring Boot 3.2 and J
 ## Getting Started
 
 ### Prerequisites
-- Java 21
+- Java 17
 - Maven 3.8+
 - PostgreSQL 14+
 

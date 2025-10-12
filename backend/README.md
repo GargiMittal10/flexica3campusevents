@@ -3,7 +3,7 @@
 Spring Boot backend for Campus Events Management System.
 
 ## Prerequisites
-- Java 21
+- Java 17
 - Maven 3.8+
 - MySQL 8.0+
 

@@ -8,7 +8,7 @@ This guide will help you set up the entire Campus Events Management System local
 
 ## Step 1: Install Prerequisites
 
-### 1.1 Install Java 21
+### 1.1 Install Java 17
 ```bash
 # Check if Java is installed
 java -version

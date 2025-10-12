@@ -1,7 +1,7 @@
 # Quick Start Guide - Setup from GitHub Download
 
 ## Prerequisites
-- **Java 21** installed ([Download](https://www.oracle.com/java/technologies/downloads/#java21))
+- **Java 17** installed ([Download](https://www.oracle.com/java/technologies/downloads/#java17))
 - **Maven** installed ([Download](https://maven.apache.org/download.cgi))
 - **MySQL 8.0+** installed and running ([Download](https://dev.mysql.com/downloads/installer/))
 - **Node.js 18+** and npm ([Download](https://nodejs.org/))

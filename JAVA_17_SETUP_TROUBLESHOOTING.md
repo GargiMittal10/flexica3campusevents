@@ -1,12 +1,12 @@
-# Java 21 Setup and Troubleshooting Guide
+# Java 17 Setup and Troubleshooting Guide
 
-## Quick Start with Java 21
+## Quick Start with Java 17
 
-### Step 1: Install Java 21
+### Step 1: Install Java 17
 ```bash
 # Verify Java version
 java -version
-# Should show: openjdk version "21.x.x"
+# Should show: openjdk version "17.x.x"
 
 # If not installed:
 # Download from: https://adoptium.net/temurin/releases/?version=21
@@ -41,7 +41,7 @@ echo $JAVA_HOME
 java -version
 ```
 
-### Step 3: Configure Maven for Java 21
+### Step 3: Configure Maven for Java 17
 
 Create or update `~/.m2/settings.xml`:
 ```xml
@@ -71,23 +71,23 @@ Create or update `~/.m2/settings.xml`:
 ```bash
 # Check Maven is using correct Java
 mvn -version
-# Should show Java version 21.x.x
+# Should show Java version 17.x.x
 
 # If not, set JAVA_HOME correctly
-export JAVA_HOME=/path/to/jdk-21
+export JAVA_HOME=/path/to/jdk-17
 mvn -version
 ```
 
-### Error 2: "Source option 21 is no longer supported"
+### Error 2: "Source option 17 is no longer supported"
 **Cause**: IDE using wrong Java version
 
 **Solution for IntelliJ IDEA**:
-1. File → Project Structure → Project → SDK: Select Java 21
-2. File → Project Structure → Project → Language Level: Select "21 - Record patterns, pattern matching for switch"
-3. File → Settings → Build, Execution, Deployment → Compiler → Java Compiler → Target bytecode version: 21
+1. File → Project Structure → Project → SDK: Select Java 17
+2. File → Project Structure → Project → Language Level: Select "17"
+3. File → Settings → Build, Execution, Deployment → Compiler → Java Compiler → Target bytecode version: 17
 
 **Solution for Eclipse**:
-1. Window → Preferences → Java → Compiler → Compiler compliance level: 21
+1. Window → Preferences → Java → Compiler → Compiler compliance level: 17
 2. Right-click project → Properties → Java Build Path → Libraries → Add Library → JRE System Library → Workspace default JRE (java-21)
 
 ### Error 3: "package javax.persistence does not exist"
@@ -296,7 +296,7 @@ curl http://localhost:8080/api/events
 
 2. **Configuration**:
    - Enable annotation processing
-   - Set Java 21 as project SDK
+   - Set Java 17 as project SDK
    - Import Maven changes automatically
 
 ### VS Code
@@ -345,7 +345,7 @@ mvn spring-boot:run -Dspring-boot.run.jvmArguments="-Xdebug -Xrunjdwp:transport=
 
 ## Verification Checklist
 
-✅ Java 21 installed and verified  
+✅ Java 17 installed and verified
 ✅ Maven 3.8+ installed  
 ✅ JAVA_HOME set correctly  
 ✅ MySQL 8.0+ running  
