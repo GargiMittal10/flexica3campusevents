@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff } from "lucide-react";
+import authService from "@/services/authService";
 
 const FacultyLogin = () => {
   const navigate = useNavigate();
@@ -21,27 +21,10 @@ const FacultyLogin = () => {
     setLoading(true);
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const response = await authService.login({ email, password });
 
-      if (authError) throw authError;
-
-      // Check if user is faculty
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", authData.user.id)
-        .single();
-
-      if (profileError || !profileData) {
-        await supabase.auth.signOut();
-        throw new Error("Failed to verify faculty status");
-      }
-
-      if (profileData.role !== "faculty") {
-        await supabase.auth.signOut();
+      if (response.role !== "FACULTY") {
+        authService.logout();
         toast({
           title: "Access Denied",
           description: "This login is for faculty members only. Please use the student login.",
@@ -58,9 +41,20 @@ const FacultyLogin = () => {
       navigate("/faculty-dashboard");
     } catch (error: any) {
       console.error("Login error:", error);
+      
+      let errorMessage = "Invalid credentials. Please check your email and password.";
+      
+      if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
+        errorMessage = "Cannot connect to server. Make sure the backend is running on http://localhost:9091";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Login Failed",
-        description: error.message || "Invalid credentials. Please check your email and password.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

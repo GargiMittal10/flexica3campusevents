@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShieldCheck, Mail, Lock, ArrowLeft } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import authService from "@/services/authService";
 
 const AdminLogin = () => {
   const { toast } = useToast();
@@ -15,51 +15,15 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Auto-create admin account on mount
-  useEffect(() => {
-    const createAdmin = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('create-admin');
-        
-        if (error) {
-          console.error('Error creating admin:', error);
-          return;
-        }
-
-        if (data?.success) {
-          console.log('Admin setup:', data.message);
-        }
-      } catch (error) {
-        console.error('Failed to create admin:', error);
-      }
-    };
-    createAdmin();
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const response = await authService.login({ email, password });
 
-      if (error) throw error;
-
-      // Check if user has admin role
-      const { data: roleData, error: roleError } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", data.user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-
-      if (roleError) throw roleError;
-
-      if (!roleData) {
-        await supabase.auth.signOut();
+      if (response.role !== "ADMIN") {
+        authService.logout();
         throw new Error("Access denied. Admin privileges required.");
       }
 
@@ -70,9 +34,21 @@ const AdminLogin = () => {
 
       navigate("/admin-dashboard");
     } catch (error: any) {
+      console.error("Login error:", error);
+      
+      let errorMessage = "Invalid login credentials";
+      
+      if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
+        errorMessage = "Cannot connect to server. Make sure the backend is running on http://localhost:9091";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
