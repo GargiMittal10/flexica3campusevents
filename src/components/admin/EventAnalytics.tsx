@@ -3,7 +3,6 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { Users, Calendar, TrendingUp, Award, Activity, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface EventAnalyticsProps {
   events: any[];
@@ -42,23 +41,8 @@ const StatCard = ({ title, value, icon, trend, description }: StatCardProps) => 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', '#FFBB28', '#FF8042', '#8884d8', '#00C49F'];
 
 export const EventAnalytics = ({ events, attendance }: EventAnalyticsProps) => {
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const [registrations, setRegistrations] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetchProfiles();
-    fetchRegistrations();
-  }, []);
-
-  const fetchProfiles = async () => {
-    const { data } = await supabase.from('profiles').select('*');
-    setProfiles(data || []);
-  };
-
-  const fetchRegistrations = async () => {
-    const { data } = await supabase.from('event_registrations').select('*');
-    setRegistrations(data || []);
-  };
+  const [profiles] = useState<any[]>([]);
+  const [registrations] = useState<any[]>([]);
 
   // Key Metrics
   const totalEvents = events.length;

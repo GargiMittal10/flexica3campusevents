@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Users, Download } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -19,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import backendService from "@/services/backendService";
 
 interface EventHistoryProps {
   events: any[];
@@ -33,22 +33,12 @@ export const EventHistory = ({ events }: EventHistoryProps) => {
   const fetchAttendees = async (eventId: string) => {
     setLoading(true);
     try {
-      const { data: attendanceData, error } = await supabase
-        .from("attendance")
-        .select(`
-          *,
-          student:student_id(full_name, student_id, email),
-          marker:marked_by(full_name, email)
-        `)
-        .eq("event_id", eventId);
-
-      if (error) throw error;
-
-      setAttendees(attendanceData || []);
+      const data = await backendService.getEventAttendance(eventId);
+      setAttendees(data || []);
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to load attendees",
         variant: "destructive",
       });
     } finally {
@@ -64,13 +54,10 @@ export const EventHistory = ({ events }: EventHistoryProps) => {
   const exportToCSV = () => {
     if (!selectedEvent || attendees.length === 0) return;
 
-    const headers = ["Student Name", "Student ID", "Email", "Marked At", "Marked By"];
+    const headers = ["Student ID", "Marked At"];
     const rows = attendees.map((a) => [
-      a.student?.full_name || "N/A",
-      a.student?.student_id || "N/A",
-      a.student?.email || "N/A",
-      new Date(a.marked_at).toLocaleString(),
-      a.marker?.full_name || "N/A",
+      a.studentId || "N/A",
+      new Date(a.markedAt).toLocaleString(),
     ]);
 
     const csvContent =
@@ -162,28 +149,22 @@ export const EventHistory = ({ events }: EventHistoryProps) => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Student Name</TableHead>
                     <TableHead>Student ID</TableHead>
-                    <TableHead>Email</TableHead>
                     <TableHead>Marked At</TableHead>
-                    <TableHead>Marked By</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {attendees.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      <TableCell colSpan={2} className="text-center text-muted-foreground">
                         No attendees found
                       </TableCell>
                     </TableRow>
                   ) : (
-                    attendees.map((attendee) => (
-                      <TableRow key={attendee.id}>
-                        <TableCell>{attendee.student?.full_name || "N/A"}</TableCell>
-                        <TableCell>{attendee.student?.student_id || "N/A"}</TableCell>
-                        <TableCell>{attendee.student?.email || "N/A"}</TableCell>
-                        <TableCell>{new Date(attendee.marked_at).toLocaleString()}</TableCell>
-                        <TableCell>{attendee.marker?.full_name || "N/A"}</TableCell>
+                    attendees.map((attendee, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{attendee.studentId || "N/A"}</TableCell>
+                        <TableCell>{new Date(attendee.markedAt).toLocaleString()}</TableCell>
                       </TableRow>
                     ))
                   )}

@@ -10,8 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Plus, Users, CheckCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Pencil, Trash2, Plus, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -24,16 +23,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import backendService from "@/services/backendService";
 
 interface Event {
   id: string;
   title: string;
   description: string;
-  event_date: string;
+  eventDate: string;
   location: string;
-  created_at: string;
+  createdAt: string;
   status?: string;
-  ended_at?: string;
+  endedAt?: string;
 }
 
 interface EventManagementTableProps {
@@ -48,7 +48,7 @@ export const EventManagementTable = ({ events, onRefresh }: EventManagementTable
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    event_date: "",
+    eventDate: "",
     location: "",
   });
 
@@ -57,7 +57,7 @@ export const EventManagementTable = ({ events, onRefresh }: EventManagementTable
     setFormData({
       title: "",
       description: "",
-      event_date: "",
+      eventDate: "",
       location: "",
     });
     setIsDialogOpen(true);
@@ -68,7 +68,7 @@ export const EventManagementTable = ({ events, onRefresh }: EventManagementTable
     setFormData({
       title: event.title,
       description: event.description || "",
-      event_date: new Date(event.event_date).toISOString().slice(0, 16),
+      eventDate: new Date(event.eventDate).toISOString().slice(0, 16),
       location: event.location || "",
     });
     setIsDialogOpen(true);
@@ -78,23 +78,16 @@ export const EventManagementTable = ({ events, onRefresh }: EventManagementTable
     if (!confirm("Are you sure you want to delete this event?")) return;
 
     try {
-      const { error } = await supabase
-        .from("events")
-        .delete()
-        .eq("id", eventId);
-
-      if (error) throw error;
-
+      await backendService.deleteEvent(eventId);
       toast({
         title: "Success",
         description: "Event deleted successfully",
       });
-
       onRefresh();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to delete event",
         variant: "destructive",
       });
     }
@@ -104,26 +97,16 @@ export const EventManagementTable = ({ events, onRefresh }: EventManagementTable
     if (!confirm("Are you sure you want to end this event?")) return;
 
     try {
-      const { error } = await supabase
-        .from("events")
-        .update({
-          status: "ended",
-          ended_at: new Date().toISOString(),
-        })
-        .eq("id", eventId);
-
-      if (error) throw error;
-
+      await backendService.updateEvent(eventId, { status: "ended" });
       toast({
         title: "Success",
         description: "Event marked as ended",
       });
-
       onRefresh();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to end event",
         variant: "destructive",
       });
     }
@@ -133,40 +116,26 @@ export const EventManagementTable = ({ events, onRefresh }: EventManagementTable
     e.preventDefault();
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
       if (editingEvent) {
         // Update existing event
-        const { error } = await supabase
-          .from("events")
-          .update({
-            title: formData.title,
-            description: formData.description,
-            event_date: formData.event_date,
-            location: formData.location,
-          })
-          .eq("id", editingEvent.id);
-
-        if (error) throw error;
-
+        await backendService.updateEvent(editingEvent.id, {
+          title: formData.title,
+          description: formData.description,
+          eventDate: formData.eventDate,
+          location: formData.location,
+        });
         toast({
           title: "Success",
           description: "Event updated successfully",
         });
       } else {
         // Create new event
-        const { error } = await supabase
-          .from("events")
-          .insert({
-            title: formData.title,
-            description: formData.description,
-            event_date: formData.event_date,
-            location: formData.location,
-            created_by: user?.id,
-          });
-
-        if (error) throw error;
-
+        await backendService.createEvent({
+          title: formData.title,
+          description: formData.description,
+          eventDate: formData.eventDate,
+          location: formData.location,
+        });
         toast({
           title: "Success",
           description: "Event created successfully",
@@ -178,7 +147,7 @@ export const EventManagementTable = ({ events, onRefresh }: EventManagementTable
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to save event",
         variant: "destructive",
       });
     }
@@ -225,12 +194,12 @@ export const EventManagementTable = ({ events, onRefresh }: EventManagementTable
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="event_date">Event Date & Time *</Label>
+                <Label htmlFor="eventDate">Event Date & Time *</Label>
                 <Input
-                  id="event_date"
+                  id="eventDate"
                   type="datetime-local"
-                  value={formData.event_date}
-                  onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
+                  value={formData.eventDate}
+                  onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
                   required
                 />
               </div>
@@ -271,7 +240,7 @@ export const EventManagementTable = ({ events, onRefresh }: EventManagementTable
               events.map((event) => (
                 <TableRow key={event.id}>
                   <TableCell className="font-medium">{event.title}</TableCell>
-                  <TableCell>{new Date(event.event_date).toLocaleString()}</TableCell>
+                  <TableCell>{new Date(event.eventDate).toLocaleString()}</TableCell>
                   <TableCell>{event.location || "N/A"}</TableCell>
                   <TableCell>
                     {event.status === "ended" ? (
@@ -279,7 +248,7 @@ export const EventManagementTable = ({ events, onRefresh }: EventManagementTable
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Ended
                       </Badge>
-                    ) : isEventPast(event.event_date) ? (
+                    ) : isEventPast(event.eventDate) ? (
                       <Badge variant="secondary">Past</Badge>
                     ) : (
                       <Badge>Upcoming</Badge>

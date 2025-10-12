@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, Lock, ArrowLeft } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
@@ -40,28 +39,12 @@ const ResetPassword = () => {
 
     setLoading(true);
 
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success!",
-        description: "Password updated successfully. You can now log in.",
-      });
-
-      navigate("/login");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Note: Password reset functionality requires backend API implementation
+    toast({
+      title: "Feature Not Available",
+      description: "Password reset requires backend implementation. Please contact an administrator.",
+    });
+    setLoading(false);
   };
 
   return (
