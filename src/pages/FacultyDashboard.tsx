@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, QrCode, BarChart3, LogOut, MessageSquare } from "lucide-react";
@@ -9,6 +8,7 @@ import EventManagement from "@/components/faculty/EventManagement";
 import QRScanner from "@/components/faculty/QRScanner";
 import AnalyticsDashboard from "@/components/faculty/AnalyticsDashboard";
 import EventFeedbackView from "@/components/faculty/EventFeedbackView";
+import authService from "@/services/authService";
 
 const FacultyDashboard = () => {
   const navigate = useNavigate();
@@ -20,40 +20,35 @@ const FacultyDashboard = () => {
     checkUser();
   }, []);
 
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+  const checkUser = () => {
+    const user = authService.getCurrentUser();
     
     if (!user) {
-      navigate("/login");
+      navigate("/faculty-login");
       return;
     }
 
-    const { data: profileData, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-    if (error || !profileData) {
-      toast({
-        title: "Error",
-        description: "Failed to load profile",
-        variant: "destructive",
-      });
+    if (user.role !== "FACULTY") {
+      if (user.role === "STUDENT") {
+        navigate("/student-dashboard");
+      } else if (user.role === "ADMIN") {
+        navigate("/admin-dashboard");
+      }
       return;
     }
 
-    if (profileData.role !== "faculty") {
-      navigate("/student-dashboard");
-      return;
-    }
-
-    setProfile(profileData);
+    setProfile({
+      id: user.id,
+      full_name: user.fullName,
+      email: user.email,
+      student_id: user.id,
+      role: user.role
+    });
     setLoading(false);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    authService.logout();
     navigate("/");
   };
 

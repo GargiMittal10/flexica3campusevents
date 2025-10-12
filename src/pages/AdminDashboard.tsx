@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import authService from "@/services/authService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,162 +46,57 @@ const AdminDashboard = () => {
     fetchAttendance();
   }, []);
 
-  const checkAdminAccess = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+  const checkAdminAccess = () => {
+    const user = authService.getCurrentUser();
     
     if (!user) {
       navigate("/admin-login");
       return;
     }
 
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle();
-
-    if (!roleData) {
+    if (user.role !== "ADMIN") {
       toast({
         title: "Access Denied",
         description: "Admin privileges required",
         variant: "destructive",
       });
-      navigate("/");
+      if (user.role === "STUDENT") {
+        navigate("/student-dashboard");
+      } else if (user.role === "FACULTY") {
+        navigate("/faculty-dashboard");
+      } else {
+        navigate("/");
+      }
     }
   };
 
   const fetchPendingApprovals = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("pending_faculty_approvals")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setPendingApprovals(data || []);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    // TODO: Implement with MySQL backend API
+    setLoading(false);
   };
 
   const fetchEvents = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .order("event_date", { ascending: false });
-
-      if (error) throw error;
-      setEvents(data || []);
-    } catch (error: any) {
-      console.error("Error fetching events:", error);
-    }
+    // TODO: Implement with MySQL backend API
   };
 
   const fetchAttendance = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("attendance")
-        .select("*");
-
-      if (error) throw error;
-      setAttendance(data || []);
-    } catch (error: any) {
-      console.error("Error fetching attendance:", error);
-    }
+    // TODO: Implement with MySQL backend API
   };
 
   const viewIdCard = async (approval: PendingApproval) => {
-    setSelectedApproval(approval);
-    
-    const { data } = await supabase.storage
-      .from("faculty-id-cards")
-      .createSignedUrl(approval.id_card_url, 300);
-
-    if (data?.signedUrl) {
-      setIdCardUrl(data.signedUrl);
-    }
+    // TODO: Implement with MySQL backend API
   };
 
   const handleApproval = async (approvalId: string, approved: boolean) => {
-    try {
-      const approval = pendingApprovals.find(a => a.id === approvalId);
-      if (!approval) return;
-
-      if (approved) {
-        // Call edge function to create user and approve
-        const { error: functionError } = await supabase.functions.invoke("approve-faculty", {
-          body: { approvalId },
-        });
-
-        if (functionError) throw functionError;
-
-        toast({
-          title: "Faculty Approved",
-          description: `${approval.full_name} has been approved and can now login`,
-        });
-      } else {
-        // Reject the approval
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        const { error } = await supabase
-          .from("pending_faculty_approvals")
-          .update({
-            status: "rejected",
-            reviewed_at: new Date().toISOString(),
-            reviewed_by: user?.id,
-          })
-          .eq("id", approvalId);
-
-        if (error) throw error;
-
-        toast({
-          title: "Faculty Rejected",
-          description: `${approval.full_name}'s application has been rejected`,
-        });
-      }
-
-      setSelectedApproval(null);
-      fetchPendingApprovals();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+    // TODO: Implement with MySQL backend API
   };
 
   const handleResetPassword = async (email: string, fullName: string) => {
-    try {
-      const { error } = await supabase.functions.invoke("reset-faculty-password", {
-        body: { email },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Password Reset",
-        description: `Password for ${fullName} has been reset to: FacultyTemp123!`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+    // TODO: Implement with MySQL backend API
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    authService.logout();
     navigate("/");
   };
 
