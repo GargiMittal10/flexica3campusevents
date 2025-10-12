@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, TrendingUp, Calendar, Award, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
+import backendService from "@/services/backendService";
 
 interface AttendanceStatsProps {
   studentId: string;
@@ -18,56 +19,27 @@ const AttendanceStats = ({ studentId }: AttendanceStatsProps) => {
   });
   const [attendanceHistory, setAttendanceHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     loadStats();
   }, [studentId]);
 
   const loadStats = async () => {
-    // Get all registered events with attendance status
-    const { data: registrations } = await supabase
-      .from("event_registrations")
-      .select(`
-        id,
-        event_id,
-        events (
-          id,
-          title,
-          event_date,
-          location
-        )
-      `)
-      .eq("student_id", studentId)
-      .order("events(event_date)", { ascending: false });
-
-    // Get all attendance records
-    const { data: attendance } = await supabase
-      .from("attendance")
-      .select("event_id, marked_at")
-      .eq("student_id", studentId);
-
-    const attendanceMap = new Map(attendance?.map(a => [a.event_id, a.marked_at]) || []);
-    
-    // Combine data
-    const history = registrations?.map(reg => ({
-      eventId: reg.events.id,
-      title: reg.events.title,
-      eventDate: reg.events.event_date,
-      location: reg.events.location,
-      attended: attendanceMap.has(reg.events.id),
-      markedAt: attendanceMap.get(reg.events.id),
-    })) || [];
-
-    const totalRegistered = registrations?.length || 0;
-    const totalAttended = attendance?.length || 0;
-    const percentage = totalRegistered > 0 ? (totalAttended / totalRegistered) * 100 : 0;
-
-    setStats({
-      totalRegistered,
-      totalAttended,
-      percentage: Math.round(percentage),
-    });
-    setAttendanceHistory(history);
+    try {
+      const data = await backendService.getStudentAttendancePercentage(studentId);
+      setStats({
+        totalRegistered: data.totalRegistered || 0,
+        totalAttended: data.totalAttended || 0,
+        percentage: data.percentage || 0,
+      });
+      setAttendanceHistory(data.history || []);
+    } catch (error: any) {
+      toast({
+        title: "Info",
+        description: "Unable to load attendance statistics",
+      });
+    }
     setLoading(false);
   };
 
@@ -157,16 +129,16 @@ const AttendanceStats = ({ studentId }: AttendanceStatsProps) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
-            Attendance History (Date-wise)
+            Attendance History
           </CardTitle>
           <CardDescription>Your complete attendance record for all events</CardDescription>
         </CardHeader>
         <CardContent>
           {attendanceHistory.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No events registered yet</p>
+            <p className="text-muted-foreground text-center py-8">No attendance records yet</p>
           ) : (
             <div className="space-y-3">
-              {attendanceHistory.map((record, index) => (
+              {attendanceHistory.map((record: any, index: number) => (
                 <div
                   key={index}
                   className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"

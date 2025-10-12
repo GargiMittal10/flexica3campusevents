@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import backendService from "@/services/backendService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,20 +42,17 @@ const EventManagement = ({ facultyId }: EventManagementProps) => {
   }, [facultyId]);
 
   const loadEvents = async () => {
-    const { data, error } = await supabase
-      .from("events")
-      .select("*")
-      .eq("created_by", facultyId)
-      .order("event_date", { ascending: false });
-
-    if (error) {
+    try {
+      const data = await backendService.getAllEvents();
+      // Filter by facultyId on frontend if backend doesn't support it
+      const filteredEvents = data.filter(event => event.createdBy === facultyId);
+      setEvents(filteredEvents);
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to load events",
+        description: error.message || "Failed to load events",
         variant: "destructive",
       });
-    } else {
-      setEvents(data || []);
     }
     setLoading(false);
   };
@@ -63,18 +60,13 @@ const EventManagement = ({ facultyId }: EventManagementProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { error } = await supabase.from("events").insert({
-      ...formData,
-      created_by: facultyId,
-    });
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
+    try {
+      await backendService.createEvent({
+        title: formData.title,
+        description: formData.description,
+        eventDate: formData.event_date,
+        location: formData.location,
       });
-    } else {
       toast({
         title: "Success",
         description: "Event created successfully",
@@ -82,6 +74,12 @@ const EventManagement = ({ facultyId }: EventManagementProps) => {
       setOpen(false);
       setFormData({ title: "", description: "", event_date: "", location: "" });
       loadEvents();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create event",
+        variant: "destructive",
+      });
     }
   };
 
@@ -185,88 +183,76 @@ const EventCard = ({ event, onUpdate }: any) => {
   }, []);
 
   const loadStats = async () => {
-    const { count: regCount } = await supabase
-      .from("event_registrations")
-      .select("*", { count: "exact", head: true })
-      .eq("event_id", event.id);
-
-    const { count: attCount } = await supabase
-      .from("attendance")
-      .select("*", { count: "exact", head: true })
-      .eq("event_id", event.id);
-
-    setRegistrations(regCount || 0);
-    setAttendance(attCount || 0);
+    try {
+      const registrations = await backendService.getEventRegistrations(event.id);
+      const attendance = await backendService.getEventAttendance(event.id);
+      setRegistrations(registrations.length);
+      setAttendance(attendance.length);
+    } catch (error) {
+      console.error("Failed to load stats:", error);
+    }
   };
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { error } = await supabase
-      .from("events")
-      .update(editFormData)
-      .eq("id", event.id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
+    try {
+      await backendService.updateEvent(event.id, {
+        title: editFormData.title,
+        description: editFormData.description,
+        eventDate: editFormData.event_date,
+        location: editFormData.location,
       });
-    } else {
       toast({
         title: "Success",
         description: "Event updated successfully",
       });
       setEditOpen(false);
       onUpdate();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update event",
+        variant: "destructive",
+      });
     }
   };
 
   const handleDelete = async () => {
-    const { error } = await supabase
-      .from("events")
-      .delete()
-      .eq("id", event.id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
+    try {
+      await backendService.deleteEvent(event.id);
       toast({
         title: "Success",
         description: "Event deleted successfully",
       });
       setDeleteOpen(false);
       onUpdate();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete event",
+        variant: "destructive",
+      });
     }
   };
 
   const handleEndEvent = async () => {
-    const { error } = await supabase
-      .from("events")
-      .update({
+    try {
+      await backendService.updateEvent(event.id, {
         status: "ended",
-        ended_at: new Date().toISOString(),
-      })
-      .eq("id", event.id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
       });
-    } else {
       toast({
         title: "Success",
         description: "Event marked as ended",
       });
       setEndEventOpen(false);
       onUpdate();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to end event",
+        variant: "destructive",
+      });
     }
   };
 

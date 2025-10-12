@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { TrendingUp, Users, Calendar, Award } from "lucide-react";
+import backendService from "@/services/backendService";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--muted))"];
 
@@ -28,66 +28,31 @@ const AnalyticsDashboard = () => {
   }, [selectedEvent]);
 
   const loadEvents = async () => {
-    const { data } = await supabase
-      .from("events")
-      .select("*")
-      .order("event_date", { ascending: false });
-
-    setEvents(data || []);
-    if (data && data.length > 0) {
-      setSelectedEvent(data[0].id);
+    try {
+      const data = await backendService.getAllEvents();
+      setEvents(data);
+      if (data.length > 0) {
+        setSelectedEvent(data[0].id);
+      }
+    } catch (error) {
+      console.error("Failed to load events:", error);
     }
   };
 
   const loadEventStats = async () => {
-    const { count: regCount } = await supabase
-      .from("event_registrations")
-      .select("*", { count: "exact", head: true })
-      .eq("event_id", selectedEvent);
-
-    const { count: attCount } = await supabase
-      .from("attendance")
-      .select("*", { count: "exact", head: true })
-      .eq("event_id", selectedEvent);
-
-    const totalReg = regCount || 0;
-    const totalAtt = attCount || 0;
-    const rate = totalReg > 0 ? (totalAtt / totalReg) * 100 : 0;
-
-    setStats({
-      totalRegistered: totalReg,
-      totalAttended: totalAtt,
-      attendanceRate: Math.round(rate),
-    });
-
-    // Load top students
-    const { data: attendanceData } = await supabase
-      .from("attendance")
-      .select(`
-        student_id,
-        profiles!inner(full_name, student_id)
-      `)
-      .limit(5);
-
-    // Group by student and count
-    const studentCounts: any = {};
-    attendanceData?.forEach((record: any) => {
-      const sid = record.student_id;
-      if (!studentCounts[sid]) {
-        studentCounts[sid] = {
-          name: record.profiles.full_name,
-          studentId: record.profiles.student_id,
-          count: 0,
-        };
-      }
-      studentCounts[sid].count++;
-    });
-
-    const topStudentsArray = Object.values(studentCounts)
-      .sort((a: any, b: any) => b.count - a.count)
-      .slice(0, 5);
-
-    setTopStudents(topStudentsArray);
+    try {
+      const report = await backendService.getEventParticipationReport(selectedEvent);
+      
+      setStats({
+        totalRegistered: report.totalRegistered || 0,
+        totalAttended: report.totalAttended || 0,
+        attendanceRate: report.attendanceRate || 0,
+      });
+      
+      setTopStudents(report.topStudents || []);
+    } catch (error) {
+      console.error("Failed to load event stats:", error);
+    }
   };
 
   const pieData = [
@@ -193,7 +158,7 @@ const AnalyticsDashboard = () => {
               {topStudents.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">No attendance data yet</p>
               ) : (
-                topStudents.map((student: any, index) => (
+                topStudents.map((student: any, index: number) => (
                   <div key={index} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">

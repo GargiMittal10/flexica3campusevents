@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { MessageSquare, Star, TrendingUp, Play, Square } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import backendService from "@/services/backendService";
 
 interface EventFeedbackViewProps {
   facultyId: string;
@@ -34,65 +34,35 @@ const EventFeedbackView = ({ facultyId }: EventFeedbackViewProps) => {
     if (selectedEvent) {
       loadFeedback();
       checkActiveFeedbackSession();
-
-      // Subscribe to feedback session changes
-      const channel = supabase
-        .channel('feedback-sessions-faculty')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'feedback_sessions',
-            filter: `event_id=eq.${selectedEvent}`
-          },
-          () => checkActiveFeedbackSession()
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
     }
   }, [selectedEvent]);
 
   const checkActiveFeedbackSession = async () => {
-    const { data } = await supabase
-      .from("feedback_sessions")
-      .select("*")
-      .eq("event_id", selectedEvent)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    setActiveFeedbackSession(data);
+    try {
+      const data = await backendService.getActiveFeedbackSession(selectedEvent);
+      setActiveFeedbackSession(data);
+    } catch (error) {
+      setActiveFeedbackSession(null);
+    }
   };
 
   const handleStartFeedback = async () => {
     if (!selectedEvent) return;
     
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-
-    const { error } = await supabase
-      .from("feedback_sessions")
-      .insert({
-        event_id: selectedEvent,
-        created_by: user?.id,
-        is_active: true,
-      });
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to start feedback collection",
-        variant: "destructive",
-      });
-    } else {
+    try {
+      await backendService.startFeedbackSession(selectedEvent);
       toast({
         title: "Feedback Enabled",
         description: "Students can now submit feedback for this event",
       });
       checkActiveFeedbackSession();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start feedback collection",
+        variant: "destructive",
+      });
     }
     setLoading(false);
   };
@@ -101,56 +71,41 @@ const EventFeedbackView = ({ facultyId }: EventFeedbackViewProps) => {
     if (!activeFeedbackSession) return;
 
     setLoading(true);
-    const { error } = await supabase
-      .from("feedback_sessions")
-      .update({
-        is_active: false,
-        ended_at: new Date().toISOString(),
-      })
-      .eq("id", activeFeedbackSession.id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to end feedback collection",
-        variant: "destructive",
-      });
-    } else {
+    try {
+      await backendService.endFeedbackSession(selectedEvent);
       toast({
         title: "Feedback Disabled",
         description: "Students can no longer submit feedback for this event",
       });
       setActiveFeedbackSession(null);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to end feedback collection",
+        variant: "destructive",
+      });
     }
     setLoading(false);
   };
 
   const loadEvents = async () => {
-    const { data } = await supabase
-      .from("events")
-      .select("*")
-      .eq("created_by", facultyId)
-      .order("event_date", { ascending: false });
-
-    setEvents(data || []);
+    try {
+      const data = await backendService.getAllEvents();
+      const facultyEvents = data.filter(event => event.createdBy === facultyId);
+      setEvents(facultyEvents);
+    } catch (error) {
+      console.error("Failed to load events:", error);
+    }
   };
 
   const loadFeedback = async () => {
-    const { data } = await supabase
-      .from("feedback")
-      .select(`
-        *,
-        profiles (
-          full_name,
-          student_id
-        )
-      `)
-      .eq("event_id", selectedEvent)
-      .order("submitted_at", { ascending: false });
-
-    if (data) {
+    try {
+      const data = await backendService.getEventFeedback(selectedEvent);
       setFeedbacks(data);
       calculateStats(data);
+    } catch (error) {
+      console.error("Failed to load feedback:", error);
+      setFeedbacks([]);
     }
   };
 
@@ -200,7 +155,7 @@ const EventFeedbackView = ({ facultyId }: EventFeedbackViewProps) => {
               <SelectContent>
                 {events.map((event) => (
                   <SelectItem key={event.id} value={event.id}>
-                    {event.title} - {new Date(event.event_date).toLocaleDateString()}
+                    {event.title} - {new Date(event.eventDate).toLocaleDateString()}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -239,7 +194,7 @@ const EventFeedbackView = ({ facultyId }: EventFeedbackViewProps) => {
         </CardContent>
       </Card>
 
-      {selectedEvent && (
+      {selectedEvent && feedbacks.length > 0 && (
         <>
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
@@ -289,32 +244,6 @@ const EventFeedbackView = ({ facultyId }: EventFeedbackViewProps) => {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Rating Distribution</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {[5, 4, 3, 2, 1].map((rating) => {
-                const count = stats.ratingDistribution[rating];
-                const percentage = stats.totalFeedback > 0 ? (count / stats.totalFeedback) * 100 : 0;
-                return (
-                  <div key={rating} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-1">
-                        <span>{rating}</span>
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      </div>
-                      <span className="text-muted-foreground">
-                        {count} ({Math.round(percentage)}%)
-                      </span>
-                    </div>
-                    <Progress value={percentage} className="h-2" />
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
               <CardTitle className="text-base">Student Comments</CardTitle>
             </CardHeader>
             <CardContent>
@@ -329,10 +258,8 @@ const EventFeedbackView = ({ facultyId }: EventFeedbackViewProps) => {
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <p className="font-medium">{feedback.profiles?.full_name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {feedback.profiles?.student_id}
-                          </p>
+                          <p className="font-medium">Student</p>
+                          <p className="text-xs text-muted-foreground">ID: {feedback.studentId}</p>
                         </div>
                         <div className="flex items-center gap-1">
                           <Badge variant={feedback.rating >= 4 ? "default" : feedback.rating >= 3 ? "secondary" : "destructive"}>
@@ -344,7 +271,7 @@ const EventFeedbackView = ({ facultyId }: EventFeedbackViewProps) => {
                         <p className="text-sm text-muted-foreground mb-2">{feedback.comment}</p>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        {format(new Date(feedback.submitted_at), "PPp")}
+                        {format(new Date(feedback.submittedAt), "PPp")}
                       </p>
                     </div>
                   ))}

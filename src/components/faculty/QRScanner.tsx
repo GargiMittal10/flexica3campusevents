@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Camera, CameraOff, CheckCircle } from "lucide-react";
+import backendService from "@/services/backendService";
 
 const QRScanner = () => {
   const [scanning, setScanning] = useState(false);
@@ -31,24 +31,26 @@ const QRScanner = () => {
   }, [selectedEvent]);
 
   const checkActiveSession = async () => {
-    const { data } = await supabase
-      .from("attendance_sessions")
-      .select("*")
-      .eq("event_id", selectedEvent)
-      .eq("is_active", true)
-      .single();
-
-    setActiveSession(data);
+    try {
+      const data = await backendService.getActiveAttendanceSession(selectedEvent);
+      setActiveSession(data);
+    } catch (error) {
+      // No active session
+      setActiveSession(null);
+    }
   };
 
   const loadEvents = async () => {
-    const { data } = await supabase
-      .from("events")
-      .select("*")
-      .gte("event_date", new Date().toISOString())
-      .order("event_date", { ascending: true });
-
-    setEvents(data || []);
+    try {
+      const data = await backendService.getAllEvents();
+      // Filter upcoming/current events
+      const upcomingEvents = data.filter(event => 
+        new Date(event.eventDate) >= new Date(Date.now() - 24 * 60 * 60 * 1000)
+      );
+      setEvents(upcomingEvents);
+    } catch (error) {
+      console.error("Failed to load events:", error);
+    }
   };
 
   const startAttendanceSession = async () => {
@@ -61,29 +63,18 @@ const QRScanner = () => {
       return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    const { data, error } = await supabase
-      .from("attendance_sessions")
-      .insert({
-        event_id: selectedEvent,
-        created_by: user?.id || "",
-        is_active: true,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to start attendance session",
-        variant: "destructive",
-      });
-    } else {
+    try {
+      const data = await backendService.startAttendanceSession(selectedEvent);
       setActiveSession(data);
       toast({
         title: "Success",
         description: "Attendance session started. Students can now show their QR codes.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start attendance session",
+        variant: "destructive",
       });
     }
   };
@@ -91,21 +82,8 @@ const QRScanner = () => {
   const endAttendanceSession = async () => {
     if (!activeSession) return;
 
-    const { error } = await supabase
-      .from("attendance_sessions")
-      .update({
-        is_active: false,
-        ended_at: new Date().toISOString(),
-      })
-      .eq("id", activeSession.id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to end attendance session",
-        variant: "destructive",
-      });
-    } else {
+    try {
+      await backendService.endAttendanceSession(selectedEvent);
       setActiveSession(null);
       if (scanning) {
         await stopScanning();
@@ -113,6 +91,12 @@ const QRScanner = () => {
       toast({
         title: "Success",
         description: "Attendance session ended",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to end attendance session",
+        variant: "destructive",
       });
     }
   };
@@ -172,42 +156,31 @@ const QRScanner = () => {
       }
 
       const studentId = parts[1];
-      const { data: { user } } = await supabase.auth.getUser();
 
-      const { data: existing } = await supabase
-        .from("attendance")
-        .select("id")
-        .eq("event_id", selectedEvent)
-        .eq("student_id", studentId)
-        .single();
-
-      if (existing) {
-        toast({
-          title: "Already Marked",
-          description: "This student's attendance is already marked",
-          variant: "destructive",
+      try {
+        await backendService.markAttendance({
+          eventId: selectedEvent,
+          studentId: studentId,
+          qrData: decodedText,
         });
-        return;
-      }
-
-      const { error } = await supabase.from("attendance").insert({
-        event_id: selectedEvent,
-        student_id: studentId,
-        marked_by: user?.id || "",
-        qr_data: decodedText,
-      });
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
         toast({
           title: "Success",
           description: "Attendance marked successfully",
         });
+      } catch (error: any) {
+        if (error.message?.includes("already marked")) {
+          toast({
+            title: "Already Marked",
+            description: "This student's attendance is already marked",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: error.message || "Failed to mark attendance",
+            variant: "destructive",
+          });
+        }
       }
     } catch (err) {
       console.error("Error marking attendance:", err);

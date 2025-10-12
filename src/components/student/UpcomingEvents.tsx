@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import backendService from "@/services/backendService";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Clock, UserPlus, CheckCircle } from "lucide-react";
@@ -22,60 +22,43 @@ const UpcomingEvents = ({ studentId }: UpcomingEventsProps) => {
   }, [studentId]);
 
   const loadUpcomingEvents = async () => {
-    // Get upcoming events (future events)
-    const { data: eventsData, error } = await supabase
-      .from("events")
-      .select("*")
-      .gte("event_date", new Date().toISOString())
-      .order("event_date", { ascending: true });
-
-    if (error) {
+    try {
+      const eventsData = await backendService.getAllEvents();
+      // Filter upcoming events on frontend
+      const upcomingEvents = eventsData.filter(event => 
+        new Date(event.eventDate) >= new Date()
+      );
+      
+      // Note: Registration check would need backend API support
+      // For now, we'll show all events
+      setEvents(upcomingEvents);
+      setRegisteredEventIds(new Set());
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to load upcoming events",
+        description: error.message || "Failed to load upcoming events",
         variant: "destructive",
       });
-      setLoading(false);
-      return;
     }
-
-    // Get registered event IDs
-    const { data: registrations } = await supabase
-      .from("event_registrations")
-      .select("event_id")
-      .eq("student_id", studentId);
-
-    const registeredIds = new Set(registrations?.map(r => r.event_id) || []);
-    
-    setEvents(eventsData || []);
-    setRegisteredEventIds(registeredIds);
     setLoading(false);
   };
 
   const handleRegister = async (eventId: string) => {
-    const { error } = await supabase
-      .from("event_registrations")
-      .insert({
-        event_id: eventId,
-        student_id: studentId,
+    try {
+      await backendService.registerForEvent(eventId);
+      toast({
+        title: "Success!",
+        description: "Successfully registered for the event",
       });
-
-    if (error) {
+      // Update registered events
+      setRegisteredEventIds(prev => new Set([...prev, eventId]));
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to register for event",
+        description: error.message || "Failed to register for event",
         variant: "destructive",
       });
-      return;
     }
-
-    toast({
-      title: "Success!",
-      description: "Successfully registered for the event",
-    });
-
-    // Update registered events
-    setRegisteredEventIds(prev => new Set([...prev, eventId]));
   };
 
   if (loading) {
