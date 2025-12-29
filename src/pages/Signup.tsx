@@ -57,15 +57,17 @@ const Signup = () => {
       
       let errorMessage = "Failed to create account";
       
-      // Check if backend is not running
-      if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
-        errorMessage = "Cannot connect to server. Make sure the backend is running on http://localhost:9091";
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.data?.errors) {
-        errorMessage = Object.values(error.response.data.errors).join(", ");
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (error.message) {
+        // Handle common Supabase auth errors with user-friendly messages
+        if (error.message.includes("User already registered")) {
+          errorMessage = "An account with this email already exists. Please sign in instead.";
+        } else if (error.message.includes("Invalid email")) {
+          errorMessage = "Please enter a valid email address.";
+        } else if (error.message.includes("Password")) {
+          errorMessage = error.message;
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       toast({
